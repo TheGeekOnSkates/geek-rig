@@ -69,9 +69,10 @@ const wchar_t *CHARSET_LOWER = L"@abcdefghijklmnopqrstuvwxyz[\\]↑← !\"#$%&'(
 #define DISK_APPEND		0b01100000
 
 // Disk drive statuses
-#define DISK_READING	1
-#define DISK_WRITING	2
-#define DISK_APPENDING	3
+#define DISK_READING			1
+#define DISK_WRITING			2
+#define DISK_APPENDING			3
+#define DISK_ERROR_NULL_STRING	4
 
 // For now, start with 4 KB of RAM
 #define RAM_MAX 4096
@@ -113,11 +114,52 @@ void updateDisplay() {
 	}
 }
 
-void updateDiskDrive() {
+/**
+ * Gets a string (ASCII, not Unicode... yet) stored in RAM
+ * @param[in] Memory address of the start of the string
+ * @param[in] A string of RAM_MAX bytes length
+ */
+void getStringAt(uint16_t pointer, char* buffer) {
+	uint16_t i, address = ram[pointer] + (ram[pointer + 1] * 256);
+	for (i=0; i<RAM_MAX - 1; i++) {
+		buffer[i] = (char)ram[address + i];
+		buffer[i + 1] = '\0';
+		if ((char)ram[address + i] == 0) break;
+	}
+}
+
+void updateDiskDrive(MCS6502ExecutionContext* context) {
 	if (ram[MM_DISK_STATUS] & DISK_READ) {
 		ram[MM_DISK_STATUS] &= ~DISK_READ;
 		ram[MM_DISK_STATUS] |= DISK_READING;
-		// to-do: Read the file
+		char path[RAM_MAX];
+		memset(path, 0, RAM_MAX);
+		getStringAt(MM_DISK_BUFFER_START, path);
+		if (path[0] == '\0') {
+			ram[MM_DISK_STATUS] &= ~DISK_READING;
+			ram[MM_DISK_STATUS] |= DISK_ERROR_NULL_STRING;
+			return;
+		}
+		FILE* file = fopen(path, "rb");
+		if (file == NULL) {
+			ram[MM_DISK_STATUS] &= ~DISK_READING;
+			// TO-DO: Get the error codes from errno and add more constants
+			ram[MM_DISK_STATUS] |= DISK_ERROR_NULL_STRING;
+			return;
+		}
+		uint16_t i = 0;
+		uint8_t byte;
+		while(!feof(file) && !ferror(file)) {
+			fread(&byte, 1, 1, file);
+			if (ferror(file)) {
+				// Again, handle error codes
+				break;
+			}
+			ram[i] = byte;
+			i++;
+		}
+		context->pc = MM_USER;
+		fclose(file);
 	}
 	else if (ram[MM_DISK_STATUS] & DISK_WRITE) {
 		ram[MM_DISK_STATUS] &= ~DISK_WRITE;
@@ -153,14 +195,29 @@ int main() {
 	noraw();
 	timeout(100);	// Play with this as needed
 
+	// Test - load a file
+	// FIrst, put the name of the file into RAM, like a program would
+	const char* path = "./programs/asm/test1.rig\0";
+	for (size_t i=0; i<strlen(path); i++) {
+		ram[4000 + i] = (uint8_t)path[i];
+	}
+	// Then, tell the disk drive where the file name is in memory
+	ram[MM_DISK_BUFFER_START] = 0xA0;
+	ram[MM_DISK_BUFFER_START + 1] = 0x0F;
+
+	// Then tell the disk drive to read (well, to read as soon as the loop below starts)
+	ram[MM_DISK_STATUS] = DISK_READ;
+
+	// Main event loop
 	while(true) {
+	
 		// Update the current key pressed
 		int key = getch();
-		if (key == -1) key = 255;
+		if (key == -1) key++;
 		ram[MM_KEY] = key;
 
 		// If the program wants to read or write anything, do that
-		updateDiskDrive();
+		updateDiskDrive(&cpu);
 
 		// Update the display
 		updateDisplay();
