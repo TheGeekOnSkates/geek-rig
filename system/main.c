@@ -34,29 +34,35 @@ const wchar_t *CHARSET_LOWER = L"@abcdefghijklmnopqrstuvwxyz[\\]↑← !\"#$%&'(
 // Screen RAM (40x24)
 #define MM_SCREEN 512
 
+// Screen width
+#define MM_COLUMNS 1472
+
+// Screen height
+#define MM_ROWS 1473
+
 // Current key pressed
-#define MM_KEY 1472
+#define MM_KEY 1474
 
 // Random number generator
-#define MM_RANDOM 1473
+#define MM_RANDOM 1475
 
 // Clock (just counts seconds)
-#define MM_CLOCK 1474
+#define MM_CLOCK 1476
 
 // Pointer to start of file read/write string
-#define MM_DISK_FILENAME 1475
+#define MM_DISK_FILENAME 1477
 
 // Pointer to start of read/write buffer
-#define MM_DISK_BUFFER_START 1477
+#define MM_DISK_BUFFER_START 1479
 
 // Pointer to end of read/write buffer
-#define MM_DISK_BUFFER_END 1479
+#define MM_DISK_BUFFER_END 1481
 
 // Disk drive status and character set:
-#define MM_DISK_STATUS 1481
+#define MM_DISK_STATUS 1483
 
 // Start of user code
-#define MM_USER 1482
+#define MM_USER 1484
 
 
 // -------------------------------------------------------------------------
@@ -93,6 +99,7 @@ uint8_t ram[RAM_MAX];
 void updateDisplay(void);
 void updateDiskDrive(MCS6502ExecutionContext* context);
 
+
 // -------------------------------------------------------------------------
 // 6502 SIMULATOR CALLBACKS
 // -------------------------------------------------------------------------
@@ -100,6 +107,25 @@ void updateDiskDrive(MCS6502ExecutionContext* context);
 uint8 OnRead(uint16 address, void* readWriteContext) {
 	if (address >= RAM_MAX) return 0;
 	if (address == MM_RANDOM) return rand() % 256;
+	if (address == MM_ROWS) {
+		ram[address] = getmaxx(stdscr);
+		return ram[address];
+	}
+	if (address == MM_COLUMNS) {
+		ram[address] = getmaxy(stdscr);
+		return ram[address];
+	}
+	if (address == MM_KEY) {
+		int key = getch();
+		if (key == -1)
+			key++;
+		else if (key >= 97 && key <= 122)
+			key -= 96;
+		else if (key >= 65 && key <= 90)
+			key -= 64;
+		ram[MM_KEY] = 0;
+		return key;
+	}
 	return (uint8)ram[address];
 }
 
@@ -119,8 +145,10 @@ void updateDisplay() {
 	// If the high bit of MM_DISK_STATUS is on, use the lowercase character set
 	if (ram[MM_DISK_STATUS] & 128) {
 		for (int i=0; i<24; i++) {
+			if (i == MM_ROWS) break;
 			move(i, 0);
 			for (int j=0; j<40; j++) {
+				if (j == MM_COLUMNS) break;
 				int x = (int)ram[MM_SCREEN + j + (i * 40)];
 				printw("%lc", CHARSET_LOWER[x]);
 			}
@@ -234,20 +262,11 @@ int main() {
 	ram[MM_DISK_BUFFER_START + 1] = 0x0F;
 
 	bool testRunning = false;
-
+	ram[MM_COLUMNS] = getmaxx(stdscr);
+	ram[MM_ROWS] = getmaxy(stdscr);
+	
 	// Main event loop
 	while(true) {
-
-		// Update the current key pressed
-		int key = getch();
-		if (key == -1)
-			key++;
-		else if (key >= 97 && key <= 122)
-			key -= 96;
-		else if (key >= 65 && key <= 90)
-			key -= 64;
-		ram[MM_KEY] = key;
-		//mvprintw(1, 41, "Key: %d   ", key);
 
 		// Update the display
 		updateDisplay();
