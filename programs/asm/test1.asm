@@ -2,8 +2,7 @@ z	include "geekrig4000.asm"
 	ORG $05CA
 	PROCESSOR 6502
 
-MAIN:
-	; Prints the word "GEEK" on the screen
+	; Print the name of the system, "GEEK-RIG 4000" on the screen
 	LDA #7
 	STA MM_SCREEN
 	LDA #5
@@ -11,18 +10,33 @@ MAIN:
 	STA MM_SCREEN + 2
 	LDA #11
 	STA MM_SCREEN + 3
+	LDA #45
+	STA MM_SCREEN + 4
+	LDA #18
+	STA MM_SCREEN + 5
+	LDA #9
+	STA MM_SCREEN + 6
+	LDA #7
+	STA MM_SCREEN + 7
+	LDA #32
+	STA MM_SCREEN + 8
+	LDA #52
+	STA MM_SCREEN + 9
+	LDA #48
+	STA MM_SCREEN + 10
+	STA MM_SCREEN + 11
+	STA MM_SCREEN + 12
 
-	; Check if the lowercase charset is turned on
-	LDA MM_DISK_STATUS
-	AND #128
-	BEQ ON
-
-	; If it gets here, it's on, so turn it off
-	LDA #0
-	STA MM_DISK_STATUS
+MAIN:
+	LDA #160
+	LDX CURSOR + 1
+	STA MM_SCREEN,X
+	LDA MM_KEY
+	BEQ MAIN
+	STA MM_SCREEN,X
+	INX
+	STX CURSOR + 1
 	JMP MAIN
 
-ON:
-	LDA #128
-	STA MM_DISK_STATUS
-	JMP MAIN
+CURSOR:
+	BYTE $00, $40

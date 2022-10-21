@@ -116,15 +116,21 @@ void OnWrite(uint16 address, uint8 byte, void* readWriteContext) {
 // -------------------------------------------------------------------------
 
 void updateDisplay() {
-	for (int i=0; i<24; i++) {
-		move(i, 0);
-		if ((ram[MM_DISK_STATUS] & 128)) {
+	// If the high bit of MM_DISK_STATUS is on, use the lowercase character set
+	if (ram[MM_DISK_STATUS] & 128) {
+		for (int i=0; i<24; i++) {
+			move(i, 0);
 			for (int j=0; j<40; j++) {
 				int x = (int)ram[MM_SCREEN + j + (i * 40)];
 				printw("%lc", CHARSET_LOWER[x]);
 			}
-			return;
 		}
+		return;
+	}
+
+	// Otherwise, use the uppercase character set
+	for (int i=0; i<24; i++) {
+		move(i, 0);
 		for (int j=0; j<40; j++) {
 			int x = (int)ram[MM_SCREEN + j + (i * 40)];
 			printw("%lc", CHARSET_UPPER[x]);
