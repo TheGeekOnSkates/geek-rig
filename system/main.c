@@ -85,18 +85,29 @@ const wchar_t *CHARSET_LOWER = L"@abcdefghijklmnopqrstuvwxyz[\\]↑← !\"#$%&'(
 uint8_t ram[RAM_MAX];
 
 
+
+// -------------------------------------------------------------------------
+// DECLARATIONS (because {ancient language reasons}) :)
+// -------------------------------------------------------------------------
+
+void updateDisplay(void);
+void updateDiskDrive(MCS6502ExecutionContext* context);
+
 // -------------------------------------------------------------------------
 // 6502 SIMULATOR CALLBACKS
 // -------------------------------------------------------------------------
 
-uint8 OnRead(uint16 address, void * readWriteContext) {
+uint8 OnRead(uint16 address, void* readWriteContext) {
 	if (address >= RAM_MAX) return 0;
+	if (address == MM_RANDOM) return rand() % 256;
 	return (uint8)ram[address];
 }
 
-void OnWrite(uint16 address, uint8 byte, void * readWriteContext) {
+void OnWrite(uint16 address, uint8 byte, void* readWriteContext) {
 	if (address < RAM_MAX)
 		ram[address] = byte;
+	if (address == MM_DISK_STATUS)
+		updateDiskDrive((MCS6502ExecutionContext*)readWriteContext);
 }
 
 
@@ -107,6 +118,13 @@ void OnWrite(uint16 address, uint8 byte, void * readWriteContext) {
 void updateDisplay() {
 	for (int i=0; i<24; i++) {
 		move(i, 0);
+		if ((ram[MM_DISK_STATUS] & 128)) {
+			for (int j=0; j<40; j++) {
+				int x = (int)ram[MM_SCREEN + j + (i * 40)];
+				printw("%lc", CHARSET_LOWER[x]);
+			}
+			return;
+		}
 		for (int j=0; j<40; j++) {
 			int x = (int)ram[MM_SCREEN + j + (i * 40)];
 			printw("%lc", CHARSET_UPPER[x]);
@@ -152,14 +170,16 @@ void updateDiskDrive(MCS6502ExecutionContext* context) {
 		while(!feof(file) && !ferror(file)) {
 			fread(&byte, 1, 1, file);
 			if (ferror(file)) {
+				ram[MM_DISK_STATUS] &= ~DISK_READING;
 				// Again, handle error codes
 				break;
 			}
 			ram[i] = byte;
 			i++;
 		}
-		context->pc = MM_USER;
 		fclose(file);
+		ram[MM_DISK_STATUS] &= ~DISK_READING;
+		context->pc = MM_USER;
 	}
 	else if (ram[MM_DISK_STATUS] & DISK_WRITE) {
 		ram[MM_DISK_STATUS] &= ~DISK_WRITE;
@@ -171,6 +191,8 @@ void updateDiskDrive(MCS6502ExecutionContext* context) {
 		ram[MM_DISK_STATUS] |= DISK_APPENDING;
 		// to-do: append to the file
 	}
+	// For debugging
+	// mvprintw(2, 41, "Disk status: %d", ram[MM_DISK_STATUS]);
 }
 
 int main() {
@@ -193,7 +215,7 @@ int main() {
 	noecho();
 	nocbreak();
 	noraw();
-	timeout(100);	// Play with this as needed
+	timeout(1);	// Play with this as needed
 
 	// Test - load a file
 	// FIrst, put the name of the file into RAM, like a program would
@@ -205,19 +227,21 @@ int main() {
 	ram[MM_DISK_BUFFER_START] = 0xA0;
 	ram[MM_DISK_BUFFER_START + 1] = 0x0F;
 
-	// Then tell the disk drive to read (well, to read as soon as the loop below starts)
-	ram[MM_DISK_STATUS] = DISK_READ;
+	bool testRunning = false;
 
 	// Main event loop
 	while(true) {
-	
+
 		// Update the current key pressed
 		int key = getch();
-		if (key == -1) key++;
+		if (key == -1)
+			key++;
+		else if (key >= 97 && key <= 122)
+			key -= 96;
+		else if (key >= 65 && key <= 90)
+			key -= 64;
 		ram[MM_KEY] = key;
-
-		// If the program wants to read or write anything, do that
-		updateDiskDrive(&cpu);
+		//mvprintw(1, 41, "Key: %d   ", key);
 
 		// Update the display
 		updateDisplay();
@@ -225,11 +249,14 @@ int main() {
 		// Update the clock
 		ram[MM_CLOCK] = (clock() - start) / CLOCKS_PER_SEC;
 		
-		// Update the random number generator
-		ram[MM_RANDOM] = rand() % 256;
-
 		// Run the next 6502 instruction
 		MCS6502ExecNext(&cpu);
+
+		// Tell the disk drive to read (well, to read as soon as the loop below starts)
+		if (!testRunning) {
+			OnWrite(MM_DISK_STATUS, DISK_READ, &cpu);
+			testRunning = true;
+		}
 	}
 	endwin();
 	return 0;
