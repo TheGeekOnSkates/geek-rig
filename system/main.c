@@ -121,8 +121,6 @@ uint8 OnRead(uint16 address, void* readWriteContext) {
 			key++;
 		else if (key >= 97 && key <= 122)
 			key -= 96;
-		else if (key >= 65 && key <= 90)
-			key -= 64;
 		ram[MM_KEY] = 0;
 		return key;
 	}
@@ -150,6 +148,11 @@ void updateDisplay() {
 			for (int j=0; j<40; j++) {
 				if (j == MM_COLUMNS) break;
 				int x = (int)ram[MM_SCREEN + j + (i * 40)];
+				if (x > 127) {
+					x -= 128;
+					attron(A_REVERSE);
+				}
+				else attroff(A_REVERSE);
 				printw("%lc", CHARSET_LOWER[x]);
 			}
 		}
@@ -161,6 +164,11 @@ void updateDisplay() {
 		move(i, 0);
 		for (int j=0; j<40; j++) {
 			int x = (int)ram[MM_SCREEN + j + (i * 40)];
+			if (x > 127) {
+				x -= 128;
+				attron(A_REVERSE);
+			}
+			else attroff(A_REVERSE);
 			printw("%lc", CHARSET_UPPER[x]);
 		}
 	}
