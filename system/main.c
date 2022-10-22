@@ -91,10 +91,9 @@ const wchar_t *CHARSET_LOWER = L"@abcdefghijklmnopqrstuvwxyz[\\]↑← !\"#$%&'(
 #define DISK_ERROR_NOT_PERMITTED			10
 #define DISK_ERROR_IS_FOLDER				11
 #define	DISK_ERROR_INTERRUPTED				12
-#define	DISK_ERROR_NOT_PERMITTED			13
-#define DISK_ERROR_RESOURCE_UNAVAILABLE		14
-#define DISK_ERROR_FILE_TOO_BIG				15
-#define DISK_ERROR_BUSY						16
+#define DISK_ERROR_RESOURCE_UNAVAILABLE		13
+#define DISK_ERROR_FILE_TOO_BIG				14
+#define DISK_ERROR_BUSY						15
 // I can add up to 15 more (31 is the highest number you can reach in the first 5 bits of a byte)
 
 // For now, start with 4 KB of RAM
@@ -160,10 +159,10 @@ void updateDisplay() {
 	// If the high bit of MM_DISK_STATUS is on, use the lowercase character set
 	if (ram[MM_DISK_STATUS] & 128) {
 		for (int i=0; i<24; i++) {
-			if (i == MM_ROWS) break;
+			if (i > MM_ROWS) break;
 			move(i, 0);
 			for (int j=0; j<40; j++) {
-				if (j == MM_COLUMNS) break;
+				if (j > MM_COLUMNS) break;
 				int x = (int)ram[MM_SCREEN + j + (i * 40)];
 				if (x > 127) {
 					x -= 128;
@@ -178,8 +177,10 @@ void updateDisplay() {
 
 	// Otherwise, use the uppercase character set
 	for (int i=0; i<24; i++) {
+		if (i > MM_ROWS) break;
 		move(i, 0);
 		for (int j=0; j<40; j++) {
+			if (j > MM_COLUMNS) break;
 			int x = (int)ram[MM_SCREEN + j + (i * 40)];
 			if (x > 127) {
 				x -= 128;
