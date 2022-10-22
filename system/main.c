@@ -2,14 +2,18 @@
 // DEPENDENCIES
 // -------------------------------------------------------------------------
 
+// Standard C stuff
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 #include <locale.h>
-#include <ncurses.h>
+#include <errno.h>
 #include <time.h>
+
+// Libraries
+#include <ncurses.h>
 #include "MCS6502.h"
 
 
@@ -70,15 +74,32 @@ const wchar_t *CHARSET_LOWER = L"@abcdefghijklmnopqrstuvwxyz[\\]↑← !\"#$%&'(
 // -------------------------------------------------------------------------
 
 // Disk drive instructions (stored in MM_DISK_STATUS)
+// The structure of this byte is as follows:
+//		- Bits 0-4 (numbers 0-31) are disk drive statuses (see below)
+//		- Bits 5-6 are DISK_READ, DISK_WRITE, or DISK_APPEND, defined here
+//		- Bit 7 changes which character set is used - unrelated, I know, but if the VIC-20 can store colors and sound volume in the same byte than what the puck. :)
 #define DISK_READ		0b00100000
 #define DISK_WRITE		0b01000000
 #define DISK_APPEND		0b01100000
 
 // Disk drive statuses
-#define DISK_READING			1
-#define DISK_WRITING			2
-#define DISK_APPENDING			3
-#define DISK_ERROR_NULL_STRING	4
+#define DISK_READING					1
+#define DISK_WRITING					2
+#define DISK_APPENDING					3
+#define DISK_ERROR_UNKNOWN				4
+#define DISK_ERROR_NULL_STRING			5
+#define DISK_ERROR_FILE_NOT_FOUND		6
+#define DISK_ERROR_ACCESS_DENIED		7
+#define DISK_ERROR_RESOURCE_UNAVAILABLE	8
+#define DISK_ERROR_BUSY					9
+#define DISK_ERROR_FILE_TOO_BIG			10
+#define DISK_ERROR_IS_FOLDER			11
+#define DISK_ERROR_INTERRUPTED			12
+#define DISK_ERROR_OUT_OF_MEMORY		13
+#define DISK_ERROR_READ_ONLY_FS			14
+#define DISK_ERROR_NOT_PERMITTED		16
+// I can fit up to 16 more (31 is the highest disk status / disk error)
+// But for now this is plenty, and more than I expected :)
 
 // For now, start with 4 KB of RAM
 #define RAM_MAX 4096
@@ -121,8 +142,6 @@ uint8 OnRead(uint16 address, void* readWriteContext) {
 			key++;
 		else if (key >= 97 && key <= 122)
 			key -= 96;
-		else if (key >= 65 && key <= 90)
-			key -= 64;
 		ram[MM_KEY] = 0;
 		return key;
 	}
@@ -150,6 +169,11 @@ void updateDisplay() {
 			for (int j=0; j<40; j++) {
 				if (j == MM_COLUMNS) break;
 				int x = (int)ram[MM_SCREEN + j + (i * 40)];
+				if (x > 127) {
+					x -= 128;
+					attron(A_REVERSE);
+				}
+				else attroff(A_REVERSE);
 				printw("%lc", CHARSET_LOWER[x]);
 			}
 		}
@@ -161,6 +185,11 @@ void updateDisplay() {
 		move(i, 0);
 		for (int j=0; j<40; j++) {
 			int x = (int)ram[MM_SCREEN + j + (i * 40)];
+			if (x > 127) {
+				x -= 128;
+				attron(A_REVERSE);
+			}
+			else attroff(A_REVERSE);
 			printw("%lc", CHARSET_UPPER[x]);
 		}
 	}
@@ -180,6 +209,30 @@ void getStringAt(uint16_t pointer, char* buffer) {
 	}
 }
 
+void setDiskError() {
+	if (errno == ENOENT)
+		ram[MM_DISK_STATUS] |= DISK_ERROR_FILE_NOT_FOUND;
+	else if (errno == EACCES)
+		ram[MM_DISK_STATUS] |= DISK_ERROR_ACCESS_DENIED;
+	else if (errno == EAGAIN)
+		ram[MM_DISK_STATUS] |= DISK_ERROR_RESOURCE_UNAVAILABLE;
+	else if (errno == EBUSY)
+		ram[MM_DISK_STATUS] |= DISK_ERROR_BUSY;
+	else if (errno == EFBIG)
+		ram[MM_DISK_STATUS] |= DISK_ERROR_FILE_TOO_BIG;
+	else if (errno == EISDIR)
+		ram[MM_DISK_STATUS] |= DISK_ERROR_IS_FOLDER;
+	else if (errno == EINTR)
+		ram[MM_DISK_STATUS] |= DISK_ERROR_INTERRUPTED;
+	else if (errno == ENOMEM)
+		ram[MM_DISK_STATUS] |= DISK_ERROR_OUT_OF_MEMORY;
+	else if (errno == EROFS)
+		ram[MM_DISK_STATUS] |= DISK_ERROR_READ_ONLY_FS;
+	else if (errno == EPERM)
+		ram[MM_DISK_STATUS] |= DISK_ERROR_NOT_PERMITTED;
+	else ram[MM_DISK_STATUS] |= DISK_ERROR_UNKNOWN;
+}
+
 void updateDiskDrive(MCS6502ExecutionContext* context) {
 	if (ram[MM_DISK_STATUS] & DISK_READ) {
 		ram[MM_DISK_STATUS] &= ~DISK_READ;
@@ -195,8 +248,7 @@ void updateDiskDrive(MCS6502ExecutionContext* context) {
 		FILE* file = fopen(path, "rb");
 		if (file == NULL) {
 			ram[MM_DISK_STATUS] &= ~DISK_READING;
-			// TO-DO: Get the error codes from errno and add more constants
-			ram[MM_DISK_STATUS] |= DISK_ERROR_NULL_STRING;
+			setDiskError();
 			return;
 		}
 		uint16_t i = 0;
