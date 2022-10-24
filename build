@@ -1,0 +1,4 @@
+10 cd programs/asm
+20 tilde test1.asm && make
+30 cd ../../
+40 make
