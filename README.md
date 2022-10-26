@@ -32,7 +32,6 @@ For the "original model", the goal is simple: build something that works in the 
 * All 256 PETSCII characters (both character sets)
 * A "disk drive" for reading/writing files
 * A couple nice little extras, like a random number generator and a timer
-* Mouse support - IMO the mouse is the new "paddle"
 * A couple little games
 * A little text editor
 
@@ -75,5 +74,6 @@ At this point it's all about polishing and pushing things to the max:
 * Up the RAM to 64K, and investigate the possibility of "banking" (probably just having 2 bytes for the bank number, and then 65536 different "banks" for blocks of memory - I'll need to research that tho)
 * A sound system comparable to the Commander X16 - or at least the C64 :)
 * A better speech synthesizer (or at least one with more options, like the rate/pitch/voice/etc.)
+* Maybe take another shot at mouse support (did not work well on the 4000)
 * At this point, it's gotta have a BASIC, with disk drive commands and probably some others I haven't thought of yet.
 * Anything else I think it needs, and games!  :)

@@ -3,11 +3,12 @@
 #include <string.h>
 #include <stdlib.h>
 #include <peekpoke.h>
+#include "geekrig4000.h"
 
 void main() {
 	uint8_t key;
 	while(true) {
-		key = PEEK(512);
+		key = PEEK(MM_KEY);
 		POKE(512, 7);
 		POKE(513, 5);
 		POKE(514, 5);

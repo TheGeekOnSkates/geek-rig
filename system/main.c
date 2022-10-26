@@ -25,6 +25,7 @@ const wchar_t *CHARSET_UPPER = L"@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]↑← !\"#$%&'(
 const wchar_t *CHARSET_LOWER = L"@abcdefghijklmnopqrstuvwxyz[\\]↑← !\"#$%&'()*+,-./0123456789:;<=>?─ABCDEFGHIJKLMNOPQRSTUVWXYZ┼🮌│🮖🮘 ▌▄▔▁▏▒▕🮏🮙🮇├▗└┐▂┌┴┬┤▎▍🮈🮂🮃▃✓▖▝┘▘▚";
 
 
+
 // -------------------------------------------------------------------------
 // MEMORY MAP MACROS
 // -------------------------------------------------------------------------
@@ -120,7 +121,7 @@ void updateDiskDrive(MCS6502ExecutionContext* context);
 // 6502 SIMULATOR CALLBACKS
 // -------------------------------------------------------------------------
 
-uint8 OnRead(uint16 address, void* readWriteContext) {
+uint8 OnRead(uint16 address, void* context) {
 	if (address >= RAM_MAX) return 0;
 	if (address == MM_RANDOM) return rand() % 256;
 	if (address == MM_ROWS) {
@@ -143,11 +144,11 @@ uint8 OnRead(uint16 address, void* readWriteContext) {
 	return (uint8)ram[address];
 }
 
-void OnWrite(uint16 address, uint8 byte, void* readWriteContext) {
+void OnWrite(uint16 address, uint8 byte, void* context) {
 	if (address < RAM_MAX)
 		ram[address] = byte;
 	if (address == MM_DISK_STATUS)
-		updateDiskDrive((MCS6502ExecutionContext*)readWriteContext);
+		updateDiskDrive((MCS6502ExecutionContext*)context);
 }
 
 
@@ -172,6 +173,7 @@ void updateDisplay() {
 				printw("%lc", CHARSET_LOWER[x]);
 			}
 		}
+		refresh();
 		return;
 	}
 
@@ -190,6 +192,7 @@ void updateDisplay() {
 			printw("%lc", CHARSET_UPPER[x]);
 		}
 	}
+	refresh();
 }
 
 /**
@@ -286,7 +289,7 @@ int main() {
 
 	// Set up the 6502
 	MCS6502ExecutionContext cpu;
-	MCS6502Init(&cpu, OnRead, OnWrite, NULL);
+	MCS6502Init(&cpu, OnRead, OnWrite, &cpu);
 	MCS6502Reset(&cpu);
 
 	// Set all the screen RAM to 32 (a space character)

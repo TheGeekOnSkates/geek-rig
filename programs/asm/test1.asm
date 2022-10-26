@@ -1,8 +1,8 @@
-z	include "geekrig4000.asm"
+	include "geekrig4000.asm"
 	ORG $05CA
 	PROCESSOR 6502
 
-MAIN:
+MAIN_MENU:
 	; Draw the title logo - not the most efficient way, I know, but it works.
 	LDA #233
 	STA MM_SCREEN + 46
@@ -140,19 +140,14 @@ MAIN:
 	LDA #18
 	STA MM_SCREEN + 469
 
-PRESS_ANY_KEY:
-	; The issue was not about memory addresses - for some reason, the screen only updates if I do:
+MAIN_MENU_PROMPT:
 	LDA MM_KEY
-	; That is a bug I will have to fix in the VM.
-	; But for now, it's kinda what I want, so I'll move on...
+	BEQ MAIN_MENU_PROMPT
 	
-	; Wait for the user to press a key
-	BEQ PRESS_ANY_KEY
-	
-	; Clear the screen
+CLEAR_SCREEN:
 	LDA #$20
 	LDX #0
-CLEAR_SCREEN:
+CLEAR_SCREEN_CONTINUE:
 	STA MM_SCREEN,X
 	STA MM_SCREEN + 40,X
 	STA MM_SCREEN + 80,X
@@ -178,9 +173,11 @@ CLEAR_SCREEN:
 	STA MM_SCREEN + 880,X
 	STA MM_SCREEN + 920,X
 	INX
-	CPX #80
-	BNE CLEAR_SCREEN
+	CPX #41
+	BNE CLEAR_SCREEN_CONTINUE
+	RTS
 	
-	
-	
-	BRK
+GAME:
+	LDA #214
+	STA MM_SCREEN
+	JMP GAME
