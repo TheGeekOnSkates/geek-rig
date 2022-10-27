@@ -1,0 +1,27 @@
+MAIN (05CC):
+	JSR SUB1	20 d5 05	+ 3 (so now we're at 05CE)
+	JSR SUB2	20 db 05	+ 3 (so now we're at 05D2)
+	JMP MAIN	4c cc 05	+ 3 (to 05D5, which matches SUB1 above)
+SUB1 (05D5, SEE ABOVE)
+	LDA #7		a9 07		+ 2 (05D6)
+	STA SCREEN	8d 00 02	+ 3 (05D9)
+	RTS		60		+ 1 (05DA)
+SUB2 (05DB, WHICH MATCHES THE REST)
+	LDA #5		a9 05		+ 2 (05DC)
+	STA SCREEN	8d 00 02	+ 3 (05E0)
+	RTS		60		+ 1 (05E1)
+
+So assuming my ORG (05CC or MM_USER) is correct (as it seems to be),
+then there's no way the issue is my Assembly code.  This narrows it down to:
+
+* How I'm using the library
+* Something in the library itself is goofy
+* A bit of both.
+
+Someone on lunduke.locals.com suggested "stack corruption", but idk how I'd
+even begin to check for that... but at least I'm ruling out it being my ASM.
+
+EDIT: I added an "LDA KEY" call (which added an "ad c2 05" to the binary, and
+moved the addresses of my labels around) but I think it would still check out.
+Adding the LDA_KEY was a guess, cuz there used to be a bug that would cause it
+to not update the screen.  That wsn't it.

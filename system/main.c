@@ -30,43 +30,43 @@ const wchar_t *CHARSET_LOWER = L"@abcdefghijklmnopqrstuvwxyz[\\]↑← !\"#$%&'(
 // MEMORY MAP MACROS
 // -------------------------------------------------------------------------
 
-// Zero-page
+// 0-255 ($00-$FF): Zero-page
 #define MM_ZP 0
 
-// 	6502 stack
+// 256-511 ($0100-01FF): 6502 stack
 #define MM_STACK 256 
 
-// Screen RAM (40x24)
+// 512-1471 ($0200-$05BF) Screen RAM (40x24)
 #define MM_SCREEN 512
 
-// Screen width
+// 1472 ($05C0): Screen width, in character cells
 #define MM_COLUMNS 1472
 
-// Screen height
+// 1473 ($05C1): Screen height, in character cells
 #define MM_ROWS 1473
 
-// Current key pressed
+// 1474 ($05C2): Current key pressed
 #define MM_KEY 1474
 
-// Random number generator
+// 1475 ($05C3): Random number generator
 #define MM_RANDOM 1475
 
-// Clock (just counts seconds)
+// 1476 ($05C4): Clock (just counts seconds)
 #define MM_CLOCK 1476
 
-// Pointer to start of file read/write string
+// 1477-1478 ($05C5-$05C6): Pointer to start of file read/write string
 #define MM_DISK_FILENAME 1477
 
-// Pointer to start of read/write buffer
+// 1479-1480 ($05C7-$05C8): Pointer to start of read/write buffer
 #define MM_DISK_BUFFER_START 1479
 
-// Pointer to end of read/write buffer
+// 1481-1482 ($05C9-$05CA): Pointer to end of read/write buffer
 #define MM_DISK_BUFFER_END 1481
 
-// Disk drive status and character set:
+// 1483 ($05CB): Disk drive status and character set:
 #define MM_DISK_STATUS 1483
 
-// Start of user code
+// 1484 ($05CC): Start of user code
 #define MM_USER 1484
 
 
@@ -106,7 +106,7 @@ const wchar_t *CHARSET_LOWER = L"@abcdefghijklmnopqrstuvwxyz[\\]↑← !\"#$%&'(
 // -------------------------------------------------------------------------
 
 uint8_t ram[RAM_MAX];
-
+clock_t start;
 
 
 // -------------------------------------------------------------------------
@@ -123,6 +123,7 @@ void updateDiskDrive(MCS6502ExecutionContext* context);
 
 uint8 OnRead(uint16 address, void* context) {
 	if (address >= RAM_MAX) return 0;
+	if (address == MM_CLOCK) return (clock() - start) / CLOCKS_PER_SEC;
 	if (address == MM_RANDOM) return rand() % 256;
 	if (address == MM_ROWS) {
 		ram[address] = getmaxx(stdscr);
@@ -265,7 +266,7 @@ void updateDiskDrive(MCS6502ExecutionContext* context) {
 			i++;
 		}
 		fclose(file);
-		ram[MM_DISK_STATUS] &= ~DISK_READING;
+		ram[MM_DISK_STATUS] = 0;
 		context->pc = MM_USER;
 	}
 	else if (ram[MM_DISK_STATUS] & DISK_WRITE) {
@@ -285,7 +286,7 @@ void updateDiskDrive(MCS6502ExecutionContext* context) {
 int main() {
 	setlocale(LC_ALL, "");
 	srand(time(NULL));
-	clock_t start = clock();
+	start = clock();
 
 	// Set up the 6502
 	MCS6502ExecutionContext cpu;
@@ -323,9 +324,6 @@ int main() {
 
 		// Update the display
 		updateDisplay();
-		
-		// Update the clock
-		ram[MM_CLOCK] = (clock() - start) / CLOCKS_PER_SEC;
 		
 		// Run the next 6502 instruction
 		MCS6502ExecNext(&cpu);
