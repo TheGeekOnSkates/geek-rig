@@ -3,5 +3,5 @@ all:
 	./geekrig4000
 
 c-test:
-	clear && cl65 ./programs/c/test1.c -o test1.rig --start-addr 0x05CA -t none
+	clear && cl65 ./programs/c/test1.c -o programs/asm/test1.rig --start-addr 0x05CC -t none
 	rm ./programs/c/*.o && ./geekrig4000 && clear

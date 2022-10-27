@@ -2,43 +2,37 @@
 #define _GEEKRIG4000_
 
 // -------------------------------------------------------------------------
-// MEMORY MAP MACROS
+// MEMORY MAP
 // -------------------------------------------------------------------------
 
-// Zero-page
-#define MM_ZP 0
-
-// 	6502 stack
-#define MM_STACK 256 
-
 // Screen RAM (40x24)
-#define MM_SCREEN 512
+#define SCREEN 0x0200
 
 // Screen width
-#define MM_COLUMNS 1472
+#define COLUMNS() PEEK(0x05C0)
 
 // Screen height
-#define MM_ROWS 1473
+#define ROWS() PEEK(0x05C1)
 
 // Current key pressed
-#define MM_KEY 1474
+#define KEY() PEEK(0x05C2)
 
 // Random number generator
-#define MM_RANDOM 1475
+#define RANDOM() PEEK(0x05C3)
 
 // Clock (just counts seconds)
-#define MM_CLOCK 1476
+#define CLOCK() PEEK(0x05C4)
 
 // Pointer to start of file read/write string
-#define MM_DISK_FILENAME 1477
+#define DISK_FILENAME 0x05C5
 
 // Pointer to start of read/write buffer
-#define MM_DISK_BUFFER_START 1479
+#define DISK_BUFFER_START 0x05C7
 
 // Pointer to end of read/write buffer
-#define MM_DISK_BUFFER_END 1481
+#define DISK_BUFFER_END 0x05C9
 
-// Disk drive status and character set:
-#define MM_DISK_STATUS 1483
+// Disk drive status and character set
+#define DISK_STATUS 0x05CB
 
 #endif

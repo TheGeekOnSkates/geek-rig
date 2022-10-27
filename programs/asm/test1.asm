@@ -2,6 +2,20 @@
 	PROCESSOR 6502
 	include "geekrig4000.asm"
 
+appleL = $80		; screen location of apple, low byte
+appleH = $02		; screen location of apple, high byte
+snakeHeadL = $2C	; screen location of snake head, low byte
+snakeHeadH = $02	; screen location of snake head, high byte
+snakeBodyStart = $12	; start of snake body byte pairs
+snakeDirection = $02	; direction (possible values are below)
+snakeLength = $03	; snake length, in bytes
+
+; Directions (each using a separate bit)
+movingUp = 1
+movingRight = 2
+movingDown = 4
+movingLeft = 8
+
 MAIN_MENU:
 	; Draw the title logo - not the most efficient way, I know, but it works.
 	LDA #233
@@ -143,6 +157,8 @@ MAIN_MENU:
 MAIN_MENU_PROMPT:
 	LDA KEY
 	BEQ MAIN_MENU_PROMPT
+	JSR CLEAR_SCREEN
+	JMP START_GAME
 	
 CLEAR_SCREEN:
 	LDA #$20
@@ -177,35 +193,14 @@ CLEAR_SCREEN_CONTINUE:
 	BNE CLEAR_SCREEN_CONTINUE
 	RTS
 	
-GAME:
-	LDA #214
-	STA SCREEN
-	JMP GAME
-
-appleL = $80		; screen location of apple, low byte
-appleH = $02		; screen location of apple, high byte
-snakeHeadL = $2C	; screen location of snake head, low byte
-snakeHeadH = $02	; screen location of snake head, high byte
-snakeBodyStart = $12	; start of snake body byte pairs
-snakeDirection = $02	; direction (possible values are below)
-snakeLength = $03	; snake length, in bytes
-
-; Directions (each using a separate bit)
-movingUp = 1
-movingRight = 2
-movingDown = 4
-movingLeft = 8
-
-	JSR init
-	JSR loop
-init:
+START_GAME:
 	JSR initSnake
 	JSR generateApplePosition
-	RTS
+	JMP loop
 
-
+; LEFT OFF HERE
 initSnake:
-	LDA #movingRight	;start direction
+	LDA #movingRight
 	STA snakeDirection
 
 	LDA #4	;start length (2 segments)
@@ -226,7 +221,6 @@ initSnake:
 	STA $15 ; body segment 2
 	RTS
 
-
 generateApplePosition:
 	;load a new random byte into $00
 	LDA RANDOM
@@ -234,13 +228,11 @@ generateApplePosition:
 
 	;load a new random number from 2 to 5 into $01
 	LDA RANDOM
-	and #$03 ;mask out lowest 2 bits
+	AND #$03 ;mask out lowest 2 bits
 	CLC
 	ADC #2
 	STA appleH
-
 	RTS
-
 
 loop:
 	JSR readKeys
