@@ -157,6 +157,19 @@ void OnWrite(uint16 address, uint8 byte, void* context) {
 // TO BE SORTED
 // -------------------------------------------------------------------------
 
+// Resets the geek-rig
+void resetGeekRig(MCS6502ExecutionContext* cpu) {
+	// Reset the 6502
+	MCS6502Reset(cpu);
+
+	// Reset the screen RAM
+	for (int i=MM_SCREEN; i<MM_KEY; i++) ram[i] = 32;
+
+	// Reset the rows and columns
+	ram[MM_COLUMNS] = getmaxx(stdscr);
+	ram[MM_ROWS] = getmaxy(stdscr);
+}
+
 void updateDisplay() {
 	// If the high bit of MM_DISK_STATUS is on, use the lowercase character set
 	if (ram[MM_DISK_STATUS] & 128) {
@@ -253,6 +266,7 @@ void updateDiskDrive(MCS6502ExecutionContext* context) {
 			setDiskError();
 			return;
 		}
+		resetGeekRig(context);
 		uint16_t i = MM_USER;
 		uint8_t byte;
 		while(!feof(file) && !ferror(file)) {
@@ -291,10 +305,7 @@ int main() {
 	// Set up the 6502
 	MCS6502ExecutionContext cpu;
 	MCS6502Init(&cpu, OnRead, OnWrite, &cpu);
-	MCS6502Reset(&cpu);
-
-	// Set all the screen RAM to 32 (a space character)
-	for (int i=MM_SCREEN; i<MM_KEY; i++) ram[i] = 32;
+	resetGeekRig(&cpu);
 
 	// Set up ncurses
 	initscr();
@@ -311,14 +322,14 @@ int main() {
 	for (size_t i=0; i<strlen(path); i++) {
 		ram[4000 + i] = (uint8_t)path[i];
 	}
+	
 	// Then, tell the disk drive where the file name is in memory
 	ram[MM_DISK_BUFFER_START] = 0xA0;
 	ram[MM_DISK_BUFFER_START + 1] = 0x0F;
 
-	bool testRunning = false;
-	ram[MM_COLUMNS] = getmaxx(stdscr);
-	ram[MM_ROWS] = getmaxy(stdscr);
-	
+	// Then, tell it to read the file (BEFORE starting my program)
+	OnWrite(MM_DISK_STATUS, DISK_READ, &cpu);
+
 	// Main event loop
 	while(true) {
 
@@ -327,12 +338,6 @@ int main() {
 		
 		// Run the next 6502 instruction
 		MCS6502ExecNext(&cpu);
-
-		// Tell the disk drive to read (well, to read as soon as the loop below starts)
-		if (!testRunning) {
-			testRunning = true;
-			OnWrite(MM_DISK_STATUS, DISK_READ, &cpu);
-		}
 	}
 	endwin();
 	return 0;
