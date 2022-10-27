@@ -253,7 +253,7 @@ void updateDiskDrive(MCS6502ExecutionContext* context) {
 			setDiskError();
 			return;
 		}
-		uint16_t i = 0;
+		uint16_t i = MM_USER;
 		uint8_t byte;
 		while(!feof(file) && !ferror(file)) {
 			fread(&byte, 1, 1, file);
@@ -330,8 +330,8 @@ int main() {
 
 		// Tell the disk drive to read (well, to read as soon as the loop below starts)
 		if (!testRunning) {
-			OnWrite(MM_DISK_STATUS, DISK_READ, &cpu);
 			testRunning = true;
+			OnWrite(MM_DISK_STATUS, DISK_READ, &cpu);
 		}
 	}
 	endwin();
