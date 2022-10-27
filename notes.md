@@ -1,11 +1,21 @@
 # TO-DO'S
 
+## The Geek-Rig itself
+
+* Get disk writing working (test by setting high scores)
+* The more I work on Viper, the more I wish I had some kind of debugger.  Maybe add a -d command-line option.
+* Set it up so you can pass a game as a command-line option too
+
 ## Viper
 
-1. Go through the [tutorial](https://skilldrick.github.io/easy6502/).
-2. When it works - when I can actually play the game - polish it up:
+* Set up the snake's head - get it to respond to key presses etc.
+* Set up the snake's body - get it to follow the head
+* I'm thinking of adding a visible wall - makes the collision-checking easier and adds a place to put the score
+* Set up the collision-checking with walls and apples (oh yeah, and set up the score) 🤣
+* There's a minor bug in CREATE_APPLE: because the low byte has a max of $BF, there are some places where an apple can never appear.  Fix it if it's noticeable at the end. :)
+* When is playable, polish it up:
 	- Set it up so it shows the player's score and the high score
-	- Add a high score screen (use that to get disk writing working)
+	- Add a high score screen (use that to get disk writing working) - make sure to credit the sites that helped me out :)
 
 ## Other games
 

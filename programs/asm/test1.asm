@@ -2,20 +2,6 @@
 	PROCESSOR 6502
 	include "geekrig4000.asm"
 
-appleL = $80		; screen location of apple, low byte
-appleH = $02		; screen location of apple, high byte
-snakeHeadL = $2C	; screen location of snake head, low byte
-snakeHeadH = $02	; screen location of snake head, high byte
-snakeBodyStart = $12	; start of snake body byte pairs
-snakeDirection = $02	; direction (possible values are below)
-snakeLength = $03	; snake length, in bytes
-
-; Directions (each using a separate bit)
-movingUp = 1
-movingRight = 2
-movingDown = 4
-movingLeft = 8
-
 MAIN_MENU:
 	; Draw the title logo - not the most efficient way, I know, but it works.
 	LDA #233
@@ -157,8 +143,8 @@ MAIN_MENU:
 MAIN_MENU_PROMPT:
 	LDA KEY
 	BEQ MAIN_MENU_PROMPT
-	JSR CLEAR_SCREEN
-	JMP START_GAME
+	JSR START_GAME
+	JMP MAIN_MENU_PROMPT
 	
 CLEAR_SCREEN:
 	LDA #$20
@@ -194,237 +180,39 @@ CLEAR_SCREEN_CONTINUE:
 	RTS
 	
 START_GAME:
-	JSR initSnake
-	JSR generateApplePosition
-	JMP loop
+	JSR CLEAR_SCREEN
+MAIN_LOOP:
+	JSR CREATE_APPLE
+	JSR CREATE_APPLE
+	JSR CREATE_APPLE
+	JSR CREATE_APPLE
+	JMP MAIN_LOOP
 
-; LEFT OFF HERE
-initSnake:
-	LDA #movingRight
-	STA snakeDirection
-
-	LDA #4	;start length (2 segments)
-	STA snakeLength
-	
-	LDA #$11
-	STA snakeHeadL
-	
-	LDA #$10
-	STA snakeBodyStart
-	
-	LDA #$0f
-	STA $14 ; body segment 1
-	
-	LDA #$04
-	STA snakeHeadH
-	STA $13 ; body segment 1
-	STA $15 ; body segment 2
-	RTS
-
-generateApplePosition:
-	;load a new random byte into $00
+; LEFT OFF HERE - the idea is basically:
+; 1. Get a random number between $00 and $BF
+; 2. Store that in the low byte
+; 3. Get a random number between $02 and $05
+; 4. Store that in the high byte, so we have a number between $0200 and $05BF
+; 5. Draw the apple (a circle) at that memory address
+; Currently trying to figure out how the comparison works.  Check this out:
+; http://www.6502.org/tutorials/compare_beyond.html
+CREATE_APPLE:
 	LDA RANDOM
-	STA appleL
+	CMP #$C0
+	BCS CREATE_APPLE
+	STA $00
 
-	;load a new random number from 2 to 5 into $01
+CREATE_APPLE_HIGH_BYTE:
+	; Ironically, just like the Geek-Rig, the one on Easy 6502
+	; also needs the high byte to be between 2 and 5, so...
 	LDA RANDOM
 	AND #$03 ;mask out lowest 2 bits
 	CLC
 	ADC #2
-	STA appleH
+	STA $01
+	
+; The actual drawing bit
+	LDA #$51		; Circle, closest I got to an apple
+	LDY #0			; Cuz I can't just STA (appleL)
+	STA ($00),Y
 	RTS
-
-loop:
-	JSR readKeys
-	JSR checkCollision
-	JSR updateSnake
-	JSR drawApple
-	JSR drawSnake
-	JSR spinWheels
-	JMP loop
-
-
-readKeys:
-	LDA KEY
-	CMP #ASCII_w
-	BEQ upKey
-	CMP #ASCII_d
-	BEQ rightKey
-	CMP #ASCII_s
-	BEQ downKey
-	CMP #ASCII_a
-	BEQ leftKey
-	RTS
-upKey:
-	LDA #movingDown
-	BIT snakeDirection
-	BNE illegalMove
-
-	LDA #movingUp
-	STA snakeDirection
-	RTS
-rightKey:
-	LDA #movingLeft
-	BIT snakeDirection
-	BNE illegalMove
-
-	LDA #movingRight
-	STA snakeDirection
-	RTS
-downKey:
-	LDA #movingUp
-	BIT snakeDirection
-	BNE illegalMove
-
-	LDA #movingDown
-	STA snakeDirection
-	RTS
-leftKey:
-	LDA #movingRight
-	BIT snakeDirection
-	BNE illegalMove
-
-	LDA #movingLeft
-	STA snakeDirection
-	RTS
-illegalMove:
-	RTS
-
-
-checkCollision:
-	JSR checkAppleCollision
-	JSR checkSnakeCollision
-	RTS
-
-
-checkAppleCollision:
-	LDA appleL
-	CMP snakeHeadL
-	BNE doneCheckingAppleCollision
-	LDA appleH
-	CMP snakeHeadH
-	BNE doneCheckingAppleCollision
-
-	;eat apple
-	INC snakeLength
-	INC snakeLength ;increase length
-	JSR generateApplePosition
-doneCheckingAppleCollision:
-	RTS
-
-
-checkSnakeCollision:
-	LDX #2 ;start with second segment
-snakeCollisionLoop:
-	LDA snakeHeadL,x
-	CMP snakeHeadL
-	BNE continueCollisionLoop
-
-maybeCollided:
-	LDA snakeHeadH,x
-	CMP snakeHeadH
-	BEQ didCollide
-
-continueCollisionLoop:
-	INX
-	INX
-	CPX snakeLength					;got to last section with no collision
-	BEQ didntCollide
-	JMP snakeCollisionLoop
-
-didCollide:
-	JMP gameOver
-didntCollide:
-	RTS
-
-
-updateSnake:
-	LDX snakeLength
-	DEX
-	TXA
-updateloop:
-	LDA snakeHeadL,x
-	STA snakeBodyStart,x
-	DEX
-	bpl updateloop
-
-	LDA snakeDirection
-	LSR
-	BCS up
-	LSR
-	BCS right
-	LSR
-	BCS down
-	LSR
-	BCS left
-up:
-	LDA snakeHeadL
-	SEC
-	SBC #$20
-	STA snakeHeadL
-	bcc upup
-	RTS
-upup:
-	dec snakeHeadH
-	LDA #$1
-	CMP snakeHeadH
-	BEQ collision
-	RTS
-right:
-	INC snakeHeadL
-	LDA #$1f
-	BIT snakeHeadL
-	BEQ collision
-	RTS
-down:
-	LDA snakeHeadL
-	CLC
-	ADC #$20
-	STA snakeHeadL
-	BCS downdown
-	RTS
-downdown:
-	INC snakeHeadH
-	LDA #$6
-	CMP snakeHeadH
-	BEQ collision
-	RTS
-left:
-	DEC snakeHeadL
-	LDA snakeHeadL
-	AND #$1f
-	CMP #$1f
-	BEQ collision
-	RTS
-collision:
-	JMP gameOver
-
-
-drawApple:
-	LDY #0
-	LDA RANDOM
-	STA (appleL),y
-	RTS
-
-
-drawSnake:
-	LDX snakeLength
-	LDA #0
-	STA (snakeHeadL,x) ; erase end of tail
-
-	LDX #0
-	LDA #1
-	STA (snakeHeadL,x) ; paint head
-	RTS
-
-
-spinWheels:
-	LDX #0
-spinloop:
-	NOP
-	NOP
-	DEX
-	BNE spinloop
-	RTS
-
-gameOver:
