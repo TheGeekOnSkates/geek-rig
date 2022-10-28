@@ -1,115 +1,23 @@
-This is the fully-commented version; saving it for the weekend for when I can work on it some more :)
-
-
-;  ___           _        __ ___  __ ___
-; / __|_ _  __ _| |_____ / /| __|/  \_  )
-; \__ \ ' \/ _` | / / -_) _ \__ \ () / /
-; |___/_||_\__,_|_\_\___\___/___/\__/___|
-
-; An annotated version of the snake example from Nick Morgan's 6502 assembly tutorial
-; on http://skilldrick.github.io/easy6502/ that I created as an exercise for myself
-; to learn a little bit about assembly. I **think** I understood everything, but I may
-; also be completely wrong :-)
-
-; Change direction with keys: W A S D
-
-; $00-01 => screen location of apple, stored as two bytes, where the first
-;           byte is the least significant.
-; $10-11 => screen location of snake head stored as two bytes
-; $12-?? => snake body (in byte pairs)
-; $02    => direction ; 1 => up    (bin 0001)
-                      ; 2 => right (bin 0010)
-                      ; 4 => down  (bin 0100)
-                      ; 8 => left  (bin 1000)
-; $03    => snake length, in number of bytes, not segments
-
-
-;The screens is divided in 8 strips of 8x32 "pixels". Each strip
-;is stored in a page, having their own most significant byte. Each
-;page has 256 bytes, starting at $00 and ending at $ff.
-
-;   ------------------------------------------------------------
-;1  | $0200 - $02ff                                            |
-;2  |                                                          |
-;3  |                                                          |
-;4  |                                                          |
-;5  |                                                          |
-;6  |                                                          |
-;7  |                                                          |
-;8  |                                                          |
-;   ------------------------------------------------------------
-;9  | $03 - $03ff                                              |
-;10 |                                                          |
-;11 |                                                          |
-;12 |                                                          |
-;13 |                                                          |
-;14 |                                                          |
-;15 |                                                          |
-;16 |                                                          |
-;   ------------------------------------------------------------
-;17 | $04 - $03ff                                              |
-;18 |                                                          |
-;19 |                                                          |
-;20 |                                                          |
-;21 |                                                          |
-;22 |                                                          |
-;23 |                                                          |
-;24 |                                                          |
-;   ------------------------------------------------------------
-;25 | $05 - $03ff                                              |
-;26 |                                                          |
-;27 |                                                          |
-;28 |                                                          |
-;29 |                                                          |
-;30 |                                                          |
-;31 |                                                          |
-;32 |                                                          |
-;   ------------------------------------------------------------
+This is the fully-commented version; as I get stuff working, I'm deleting it from here.
 
   jsr init ;jump to subroutine init
   jsr loop ;jump to subroutine loop
-
 init:
-  jsr initSnake             ;jump to subroutine initSnake
-  jsr generateApplePosition ;jump to subroutine generateApplePosition
-  rts                       ;return
-
+  jsr initSnake			; This is CREATE_SNAKE in my code.
+  				; It's all done except for the part below,
+				; which I'm hanging onto till I understand it :)
+  jsr generateApplePosition	; This is CREATE_APPLE in my code, done
+  rts				; End of "init"
 
 initSnake:
-  ;start the snake in a horizontal position in the middle of the game field
-  ;having a total length of one head and 4 bytes for the segments, meaning a
-  ;total length of 3: the head and two segments.
-  ;The head is looking right, and the snaking moving to the right.
-
-  ;initial snake direction (2 => right)
-  lda #2   ;start direction, put the dec number 2 in register A
-  sta $02  ;store value of register A at address $02
-
-  ;initial snake length of 4
-  lda #4   ;start length, put the dec number 4 (the snake is 4 bytes long)
-           ;in register A
-  sta $03  ;store value of register A at address $03
-  
-  ;Initial snake head's location's least significant byte to determine
-  ;where in a 8x32 strip the head will start. hex $11 is just right
-  ;of the center of the first row of a strip
-  lda #$11 ;put the hex number $11 (dec 17) in register A
-  sta $10  ;store value of register A at address hex 10
-
-  ;Initial snake body, two least significant bytes set to hex $10
-  ;and hex $0f, one and two places left of the head respectively
-  lda #$10 ;put the hex number $10 (dec 16) in register A
-  sta $12  ;store value of register A at address hex $12
-  lda #$0f ;put the hex number $0f (dec 15) in register A
-  sta $14  ;store value of register A at address hex $14
-
   ;the most significant bytes of the head and body of the snake
   ;are all set to hex $04, which is the third 8x32 strip.
-  lda #$04 ;put the hex number $04 in register A
-  sta $11  ;store value of register A at address hex 11
-  sta $13  ;store value of register A at address hex 13
-  sta $15  ;store value of register A at address hex 15
-  rts      ;return
+  ; *NOTE:* Not sure what this is doing
+  lda #$04
+  sta $11
+  sta $13
+  sta $15
+  rts
 
 
 generateApplePosition:

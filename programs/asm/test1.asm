@@ -1,3 +1,44 @@
+; __        __   __________    ______     ________    ______
+; \ \      / /  |____  ____|  |  __  \   |  ______|  |  __  \
+;  \ \    / /       |  |      | |__|  |  |  |___     | |__|  |
+;   \ \  / /        |  |      |   ___/   |  ____|    |     _/
+;    \ \/ /         |  |      |  |       |  |        |  |\ |
+;     \  /       ___|  |____  |  |       |  |______  |  | \ \
+;      \/       |___________| |__|       |________|  |__|  \_\
+; 
+; ==========================================================================================================================================================
+; 
+; Credits:
+; 	"skilldrick", who wrote the tutorial that got me started
+;	in 6502 Assembly programming, and also the original game
+;	http://skilldrick.github.io/easy6502/
+; 
+;	"vkjagt", whose addition to skilldrick's work helped me
+;	understand the code and port it to the Geek-Rig 4000
+; 	https://gist.github.com/wkjagt/9043907
+; 	
+; 
+; ==========================================================================================================================================================
+; MEMORY MAP
+;
+; ADDRESS	WHAT I'M PUTTING THERE
+; $00-01	screen location of apple, stored as two bytes, where the first byte is the least significant.
+; $02		direction:
+; 			1 => up    (bin 0001)
+; 			2 => right (bin 0010)
+; 			4 => down  (bin 0100)
+; 			8 => left  (bin 1000)
+; $03		snake length, in number of bytes, not segments
+; $04-05	screen location of snake head stored as two bytes
+; $06-??	snake body (in byte pairs)
+; ==========================================================================================================================================================
+; OTHER NOTES:
+; 	* Change direction with keys: W A S D
+; 	* Unlike the system this game was originally designed for (a web-based system-in-a-browser), the Geek-Rig has 40x24 characters, from $0200-05BF.
+; 
+; 
+; 
+; ==========================================================================================================================================================
 	ORG $05CC
 	PROCESSOR 6502
 	include "geekrig4000.asm"
@@ -143,8 +184,7 @@ MAIN_MENU:
 MAIN_MENU_PROMPT:
 	LDA KEY
 	BEQ MAIN_MENU_PROMPT
-	JSR START_GAME
-	JMP MAIN_MENU_PROMPT
+	JMP START_GAME
 	
 CLEAR_SCREEN:
 	LDA #$20
@@ -181,27 +221,42 @@ CLEAR_SCREEN_CONTINUE:
 	
 START_GAME:
 	JSR CLEAR_SCREEN
+	JSR CREATE_SNAKE
+	JSR CREATE_APPLE
 MAIN_LOOP:
-	JSR CREATE_APPLE
-	JSR CREATE_APPLE
-	JSR CREATE_APPLE
-	JSR CREATE_APPLE
+	JSR DRAW_APPLE
 	JMP MAIN_LOOP
 
-; LEFT OFF HERE - the idea is basically:
-; 1. Get a random number between $00 and $BF
-; 2. Store that in the low byte
-; 3. Get a random number between $02 and $05
-; 4. Store that in the high byte, so we have a number between $0200 and $05BF
-; 5. Draw the apple (a circle) at that memory address
-; Currently trying to figure out how the comparison works.  Check this out:
-; http://www.6502.org/tutorials/compare_beyond.html
+; This corresponds to "initSnake" in the original
+CREATE_SNAKE:
+	LDA #214	; The reverse X, like a scaly snake
+	STA $03F4	; Center of the screen
+  	LDA #2		; direction = right
+	STA $02
+	LDA #4		; remember the head counts for 2 bytes
+	STA $03		; Again, address $03 = snake length
+	
+	LDA #$F4	; We also need to store the head's location
+	STA $04		; in memory addresses $04-05 for later
+	LDA #$03	; Above was low byte (LSB)
+	STA $05		; And here is the high byte (MSB)
+	
+	; Set up the pointers to the snake's body, two LSBs
+	; "one and two places left of the head respectively"
+	LDA #$F3	; Head is at $F4, so one to the left is $F3
+	STA $06		; Snake body starts here
+	LDA #$F2	; Next one to the left is at $F2
+	STA $07		; And store that at the "end of the line"
+	
+	; LEFT OFF HERE
+	RTS
+
+
 CREATE_APPLE:
 	LDA RANDOM
 	CMP #$C0
 	BCS CREATE_APPLE
 	STA $00
-
 CREATE_APPLE_HIGH_BYTE:
 	; Ironically, just like the Geek-Rig, the one on Easy 6502
 	; also needs the high byte to be between 2 and 5, so...
@@ -210,8 +265,7 @@ CREATE_APPLE_HIGH_BYTE:
 	CLC
 	ADC #2
 	STA $01
-	
-; The actual drawing bit
+DRAW_APPLE:
 	LDA #$51		; Circle, closest I got to an apple
 	LDY #0			; Cuz I can't just STA (appleL)
 	STA ($00),Y
