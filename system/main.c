@@ -134,6 +134,7 @@ uint8 OnRead(uint16 address, void* context) {
 		return ram[address];
 	}
 	if (address == MM_KEY) {
+		/*
 		int key = getch();
 		if (key == -1)
 			key++;
@@ -141,6 +142,9 @@ uint8 OnRead(uint16 address, void* context) {
 			key -= 96;
 		ram[MM_KEY] = key;
 		return key;
+		*/
+		int key = getch();
+		if (key != -1) ram[MM_KEY] = key;
 	}
 	return (uint8)ram[address];
 }
@@ -353,7 +357,7 @@ int main(int argc, const char** argv) {
 	noecho();
 	nocbreak();
 	noraw();
-	timeout(1);	// Play with this as needed
+	timeout(0);	// Play with this as needed
 
 	// Open the debug file if the user wants one
 	if (debugMode) {
