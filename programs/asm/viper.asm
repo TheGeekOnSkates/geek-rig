@@ -10,18 +10,16 @@ MAIN_LOOP:
 	jsr spinWheels
 	JMP MAIN_LOOP	; This one was easy :)
 
-checkSnakeCollision:
-	ldx #2 ;Load the value 2 into the X register, so we start with the first segment
-snakeCollisionLoop:
-	lda $10,x ;load the value stored at address $10 (the least significant byte of
-	;the location of the snake's head) plus the value of the x register
-	;(2 in the first iteration) to get the least significant byte of the
-	;position of the next snake segment
-	cmp $10	 ;compare to the value at address $10 (the least significant
-	;byte of the position of the snake's head
-	bne continueCollisionLoop ;if not equals, we haven't found a collision yet,
-			;branch to continueCollisionLoop to continue the loop
-maybeCollided:
+CHECK_SNAKE_COLLISION:
+	LDX #2		; start with the first segment
+SNAKE_COLLISION_LOOP:
+	LDA $04,x	; load the least significant byte of the snake's head + x
+				;(2 in the first iteration) to get the least significant byte of the
+				;position of the next snake segment
+	cmp $10		;compare to the value at address $10 (the least significant
+				;byte of the position of the snake's head
+	BNE CONTINUE_COLLISION_LOOP
+MAYBE_COLLIDED:
 	;ending up here means we found a segment of the snake's body that
 	;has a least significant byte that's equal to that of the snake's head.
 	lda $11,x	;load the value stored at address $11 (most significant byte of
@@ -33,7 +31,7 @@ maybeCollided:
 	beq didCollide ;both position bytes of the compared segment of the snake body
 		 ;are equal to those of the head, so we have a collision of the
 		 ;snake's head with its own body.
-continueCollisionLoop:
+CONTINUE_COLLISION_LOOP:
 	;increment the value in the x register twice because we use two bytes to store
 	;the coordinates for snake head and body segments
 	inx		;increment the value of the x register
@@ -45,12 +43,10 @@ continueCollisionLoop:
 	
 	;ending up here means we haven't checked all snake body segments yet
 	jmp snakeCollisionLoop;jump to snakeCollisionLoop to continue the loop
-didCollide:
-	;there was a collision
-	jmp gameOver ;jump to gameOver
-didntCollide:
-	;there was no collision, continue the game
-	rts ;return
+DID_COLLIDE:
+	JMP GAME_OVER
+DIDNT_COLLIDE:
+	RTS
 
 
 updateSnake:

@@ -12,7 +12,7 @@
 #include <errno.h>
 #include <time.h>
 
-// lIBRARIES
+// Libraries
 #include <ncurses.h>
 #include "MCS6502.h"
 
@@ -297,7 +297,25 @@ void updateDiskDrive(MCS6502ExecutionContext* context) {
 	// mvprintw(2, 41, "Disk status: %d", ram[MM_DISK_STATUS]);
 }
 
-int main() {
+int main(int argc, const char** argv) {
+	if (argc < 2 || argc > 3) {
+		printf("GEEK-RIG 4000\n\n");
+		printf("Usage: geekrig4000 [-d] game.rig\n");
+		printf("    -d: print Assembly debug info to debug.tsv\n");
+		printf("    game.rig: The game to load\n");
+		return 0;
+	}
+	bool debugMode = false;
+	const char* game;
+	FILE* debugFile = NULL;
+	uint16_t i;
+	for (i=1; i<argc; i++) {
+		if (strcmp(argv[i], "-d") == 0)
+			debugMode = true;
+		else game = argv[i];
+	}
+
+	// Set up some other stuff
 	setlocale(LC_ALL, "");
 	srand(time(NULL));
 	start = clock();
@@ -306,6 +324,27 @@ int main() {
 	MCS6502ExecutionContext cpu;
 	MCS6502Init(&cpu, OnRead, OnWrite, &cpu);
 	resetGeekRig(&cpu);
+
+	// Load the game
+	debugFile = fopen(game, "rb");
+	if (debugFile == NULL) {
+		perror("Error loading game");
+		return 0;
+	}
+	i = MM_USER;
+	uint8_t byte;
+	while(!feof(debugFile) && !ferror(debugFile)) {
+		fread(&byte, 1, 1, debugFile);
+		if (ferror(debugFile)) {
+			perror("Error reading game file");
+			fclose(debugFile);
+			return 0;
+		}
+		ram[i] = byte;
+		i++;
+	}
+	fclose(debugFile);
+	cpu.pc = MM_USER;
 
 	// Set up ncurses
 	initscr();
@@ -316,20 +355,18 @@ int main() {
 	noraw();
 	timeout(1);	// Play with this as needed
 
-	// Test - load a file
-	// FIrst, put the name of the file into RAM, like a program would
-	const char* path = "./programs/asm/test1.rig\0";
-	for (size_t i=0; i<strlen(path); i++) {
-		ram[4000 + i] = (uint8_t)path[i];
+	// Open the debug file if the user wants one
+	if (debugMode) {
+		debugFile = fopen("debug.tsv", "w");
+		if (debugFile == NULL) {
+			perror("Error opening debug file");
+			return 0;
+		}
+		
+		// And write the column headers
+		fprintf(debugFile, "A\tX\tY\tPC\tRAM\n");
 	}
 	
-	// Then, tell the disk drive where the file name is in memory
-	ram[MM_DISK_BUFFER_START] = 0xA0;
-	ram[MM_DISK_BUFFER_START + 1] = 0x0F;
-
-	// Then, tell it to read the file (BEFORE starting my program)
-	OnWrite(MM_DISK_STATUS, DISK_READ, &cpu);
-
 	// Main event loop
 	while(true) {
 
@@ -338,7 +375,12 @@ int main() {
 		
 		// Run the next 6502 instruction
 		MCS6502ExecNext(&cpu);
+
+		// Print debug info if debug mode is on
+		if (!debugMode) continue;
+		fprintf(debugFile, "$%02x\t$%02x\t$%02x\t$%04x\t$%02x\n", cpu.a, cpu.x, cpu.y, cpu.pc, ram[cpu.pc]);
 	}
+	fclose(debugFile);
 	endwin();
 	return 0;
 }

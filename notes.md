@@ -1,10 +1,22 @@
 # TO-DO'S
 
-## The Geek-Rig itself
+## The Geek-Rig itself just needs some work on the disk drive
 
-* Get disk writing working (test by setting high scores)
-* The more I work on Viper, the more I wish I had some kind of debugger.  Maybe add a -d command-line option.
-* Set it up so you can pass a game as a command-line option too
+A few notes on this:
+
+MM_BUFFER_START is not really what I initially thought it would be.
+It's a pointer to a NULL-terminated string, the NAME of the file to load/save.
+I should rename it to MM_DISK_FILE_NAME or something.
+
+For writing, I'll need four bytes: 2 for the start of the area to write,
+and 2 for the end.  I can't really do a NULL-terminated string like the file
+name, because BRK (a.k.a 0, a.k.a. char code for NULL) is an instruction I
+might find in the middle of a program.
+
+Also, I don't think I'm going to have an "append mode vs. overwrite mode".
+Until I have an actual "disk" structure, supporting multiple files, there's
+really no point in that (and even then I think I could do better).  Thoughts
+for the 8000, when I get there.
 
 ## Viper
 
