@@ -139,7 +139,7 @@ uint8 OnRead(uint16 address, void* context) {
 			key++;
 		else if (key >= 97 && key <= 122)
 			key -= 96;
-		ram[MM_KEY] = 0;
+		ram[MM_KEY] = key;
 		return key;
 	}
 	return (uint8)ram[address];
