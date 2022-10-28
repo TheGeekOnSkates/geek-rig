@@ -1,128 +1,15 @@
 This is the fully-commented version; as I get stuff working, I'm deleting it from here.
+Once the game is done, I'll delete this whole thing and replace it with the finished source code.
 
-  jsr init ;jump to subroutine init
-  jsr loop ;jump to subroutine loop
-init:
-  jsr initSnake			; This is CREATE_SNAKE in my code.
-  				; It's all done except for the part below,
-				; which I'm hanging onto till I understand it :)
-  jsr generateApplePosition	; This is CREATE_APPLE in my code, done
-  rts				; End of "init"
-
-initSnake:
-  ;the most significant bytes of the head and body of the snake
-  ;are all set to hex $04, which is the third 8x32 strip.
-  ; *NOTE:* Not sure what this is doing
-  lda #$04
-  sta $11
-  sta $13
-  sta $15
-  rts
-
-
-generateApplePosition:
-  ;Th least significant byte of the apple position will determine where
-  ;in a 8x32 strip the apple is placed. This number can be any one byte value because
-  ;the size of one 8x32 strip fits exactly in one out of 256 bytes
-  lda $fe ;load a random number between 0 and 255 from address $fe into register A
-  sta $00 ;store value of register A at address hex 00
-
-  ;load a new random number from 2 to 5 into $01 for the most significant byte of
-  ;the apple position. This will determine in which 8x32 strip the apple is placed
-  lda $fe  ;load a random number from address $fe into register A
-
-  ;AND: logical AND with accumulator. Apply logical AND with hex $03 to value in
-  ;register A. Hex 03 is binary 00000011, so only the two least significant bits
-  ;are kept, resulting in a value between 0 (bin 00000000) and 3 (bin 00000011).
-  ;Add 2 to the result, giving a random value between 2 and 5
-  and #$03 ;mask out lowest 2 bits
-  clc      ;clear carry flag 
-  adc #2   ;add to register A, using carry bit for overflow.
-  sta $01  ;store value of y coordinate from register A into address $01
-
-  rts      ;return
-
-
-loop:
+MAIN_LOOP:
   ;the main game loop
-  jsr readKeys         ;jump to subroutine readKeys
+  JSR READ_KEYS		; Done
   jsr checkCollision   ;jump to subroutine checkCollision
-  jsr updateSnake      ;jump to subroutine updateSnake
-  jsr drawApple        ;jump to subroutine drawApple
-  jsr drawSnake        ;jump to subroutine drawSnake
-  jsr spinWheels       ;jump to subroutine spinWheels
-  jmp loop             ;jump to loop (this is what makes it loop)
-
-
-readKeys:
-  ;for getting keypresses, the last address ($ff) in the zero page contains
-  ;the hex code of the last pressed key
-
-  lda $ff        ;load the value of the latest keypress from address $ff into register A
-  cmp #$77       ;compare value in register A to hex $77 (W)
-  beq upKey      ;Branch On Equal, to upKey
-  cmp #$64       ;compare value in register A to hex $64 (D)
-  beq rightKey   ;Branch On Equal, to rightKey
-  cmp #$73       ;compare value in register A to hex $73 (S)
-  beq downKey    ;Branch On Equal, to downKey
-  cmp #$61       ;compare value in register A to hex $61 (A)
-  beq leftKey    ;Branch On Equal, to leftKey
-  rts            ;return
-
-upKey:
-  lda #4          ;load value 4 into register A, correspoding to the value for DOWN
-  bit $02         ;AND with value at address $02 (the current direction), 
-                  ;setting the zero flag if the result of ANDing the two values
-                  ;is 0. So comparing to 4 (bin 0100) only sets zero flag if
-                  ;current direction is 4 (DOWN). So for an illegal move (current
-                  ;direction is DOWN), the result of an AND would be a non zero value
-                  ;so the zero flag would not be set. For a legal move the bit in the
-                  ;new direction should not be the same as the one set for DOWN,
-                  ;so the zero flag needs to be set
-  bne illegalMove ;Branch If Not Equal: meaning the zero flag is not set.
-
-  lda #1          ;Ending up here means the move is legal, load the value 1 (UP) into
-                  ;register A
-  sta $02         ;Store the value of A (the new direction) into register A
-  rts             ;return
-
-rightKey:
-  lda #8          ;load value 8 into register A, corresponding to the value for LEFT
-  bit $02         ;AND with current direction at address $02 and check if result
-                  ;is zero
-  bne illegalMove ;Branch If Not Equal: meaning the zero flag is not set.
-
-  lda #2          ;Ending up here means the move is legal, load the value 2 (RIGHT) into
-                  ;register A
-  sta $02         ;Store the value of A (the new direction) into register A
-  rts             ;return
-
-downKey:
-  lda #1          ;load value 1 into register A, correspoding to the value for UP
-  bit $02         ;AND with current direction at address $02 and check if result
-                  ;is zero
-  bne illegalMove ;Branch If Not Equal: meaning the zero flag is not set.
-
-  lda #4          ;Ending up here means the move is legal, load the value 4 (DOWN) into
-                  ;register A
-  sta $02         ;Store the value of A (the new direction) into register A
-  rts             ;return
-
-leftKey:
-  lda #2          ;load value 1 into register A, correspoding to the value for RIGHT
-  bit $02         ;AND with current direction at address $02 and check if result
-                  ;is zero
-  bne illegalMove ;Branch If Not Equal: meaning the zero flag is not set.
-
-  lda #8          ;Ending up here means the move is legal, load the value 8 (LEFT) into
-                  ;register A
-  sta $02         ;Store the value of A (the new direction) into register A
-  rts             ;return
-
-illegalMove:
-  ;for an illegal move, just return, so the keypress is ignored
-  rts             ;return
-
+  jsr updateSnake
+  jsr drawApple
+  jsr drawSnake
+  jsr spinWheels
+  JMP MAIN_LOOP		; This one was easy :)
 
 checkCollision:
   jsr checkAppleCollision ;jump to subroutine checkAppleCollision
@@ -360,7 +247,14 @@ spinloop:
   rts          ;return
 
 
-gameOver: ;game over is literally the end of the program
+
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+COMMENTS
+----------------------------------------------------------------------------------------------
+
 @RGrun
 Tip
 RGrun commented on Feb 5, 2016
@@ -397,14 +291,10 @@ adc #1
 bne spinloop
 rts
 
-@grobda
-Tip
-grobda commented on Feb 15, 2019
+@grobda commented on Feb 15, 2019
 I think a better way to code the snake and detect collisions with itself would be to only store the head and tail (last segment) locations. A collision would be detected by comparing the next head position to the colour of the target location. If that colour was white then collision would be positive. The head would be drawn and tail erased as normal. This might also fix the game bugging when the snake gets to a certain length, and make the speed consistent. White would be need to be removed as a possible apple colour.
 
-@Joker-vD
-Tip
-Joker-vD commented on Oct 8, 2019
+@Joker-vD commented on Oct 8, 2019
 @grobda How would you update the snake without storing the adjacency information? Look at these two snakes:
 
  ┏━━━>       ┏┓┏━>
@@ -412,15 +302,10 @@ Joker-vD commented on Oct 8, 2019
 ━━━┛        ━┛┗┛
 Both of them have 3x3 solid block in the middle, and their heads (and tails) look in the same directions. And yet, as they move, you would need to somehow tell them apart to correctly erase that 3x3 block of pixels.
 
-@wkjagt
-Tip
-Author
-wkjagt commented on Oct 8, 2019
+@wkjagt commented on Oct 8, 2019
 @cjoudrey do you know the answer to this?
 
-@yevrah
-Tip
-yevrah commented on Oct 14, 2019 • 
+@yevrah commented on Oct 14, 2019 • 
 I was thinking the same as @grobda.
 
 Playing around with the colors I noticed that they repeat when overflowing. So black, white, ..., light grey ($0, $1, ..., $f) overflow so that black can be $10 (which comes after $f), and white can be $11, $21, and $31 . From this, we get enough whites to encode the direction of the next segment into each pixel, which allows for some memory saving shortcuts.
@@ -430,20 +315,3 @@ Before we remove a tail segment we need to calculate the position of the next se
 Checking for collisions should be updated to see if the next segment lands on a black pixel - otherwise you would need to compare against 4 types of whites in the current implementation.
 We don't have to worry too much about the apple as it is handled before the snake collision test.
 In essence, we are creating a linked list of directions and popping the last value when removing the tail. Having said that, this is purely an exercise in minimizing the memory footprint. The original method remains as a good teaching tool and maybe more valid when creating a real game with more features.
-
- to join this conversation on GitHub. Already have an account? Sign in to comment
-
-Footer
-© 2022 GitHub, Inc.
-Footer navigation
-Terms
-Privacy
-Security
-Status
-Docs
-Contact GitHub
-Pricing
-API
-Training
-Blog
-About

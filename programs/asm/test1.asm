@@ -224,10 +224,11 @@ START_GAME:
 	JSR CREATE_SNAKE
 	JSR CREATE_APPLE
 MAIN_LOOP:
+	JSR READ_KEYS
+	; LEFT OFF HERE
 	JSR DRAW_APPLE
 	JMP MAIN_LOOP
 
-; This corresponds to "initSnake" in the original
 CREATE_SNAKE:
 	LDA #214	; The reverse X, like a scaly snake
 	STA $03F4	; Center of the screen
@@ -248,9 +249,14 @@ CREATE_SNAKE:
 	LDA #$F2	; Next one to the left is at $F2
 	STA $07		; And store that at the "end of the line"
 	
-	; LEFT OFF HERE
+	; There was also this bit in the origina; not sure if I need it, but it would go here...
+;	;the most significant bytes of the head and body of the snake
+;	;are all set to hex $04, which is the third 8x32 strip.
+;	lda #$04
+;	sta $11
+;	sta $13
+;	sta $15
 	RTS
-
 
 CREATE_APPLE:
 	LDA RANDOM
@@ -270,3 +276,63 @@ DRAW_APPLE:
 	LDY #0			; Cuz I can't just STA (appleL)
 	STA ($00),Y
 	RTS
+
+READ_KEYS:
+	LDA KEY
+	CMP #KEY_W
+	BEQ GOING_UP
+	CMP #KEY_D
+	BEQ GOING_DOWN
+	CMP #KEY_D
+	BEQ GOING_RIGHT
+	CMP #KEY_S
+	BEQ GOING_LEFT
+	RTS
+	
+; NOTE (from the original):
+; setting the zero flag if the result of ANDing the two values
+; is 0. So comparing to 4 (bin 0100) only sets zero flag if
+; current direction is 4 (DOWN). So for an illegal move (current
+; direction is DOWN), the result of an AND would be a non zero value
+; so the zero flag would not be set. For a legal move the bit in the
+; new direction should not be the same as the one set for DOWN,
+; so the zero flag needs to be set
+GOING_UP:
+	LDA #4		; Direction = up
+	BIT $02		; AND with value at address $02 (the current direction)
+	BNE ILLEGAL_MOVE
+	LDA #1		; Ending up here means the move is legal
+	STA $02		; ;Store the new direction at address $02
+	RTS
+
+; The other directions work in exactly the same way
+GOING_DOWN:
+	LDA #1
+	BIT $02
+	BNE ILLEGAL_MOVE
+	LDA #4
+	STA $02
+	RTS
+GOING_RIGHT:
+	LDA #8
+	BIT $02
+	BNE ILLEGAL_MOVE
+	LDA #2
+	STA $02
+	RTS
+GOING_LEFT:
+	LDA #2
+	BIT $02
+	BNE ILLEGAL_MOVE
+	LDA #8
+	STA $02
+	; RTS	; Actually I can cut this out, saving a byte for something else
+ILLEGAL_MOVE:
+	RTS	; just return, so the keypress is ignored
+	
+
+GAME_OVER:
+	; In the original, this was the end of the program.
+	; For Viper, I'd like this to load a high score screen
+	; But for now...
+	JMP MAIN_MENU
