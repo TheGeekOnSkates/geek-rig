@@ -24,10 +24,10 @@
 ; ADDRESS	WHAT I'M PUTTING THERE
 ; $00-01	screen location of apple, stored as two bytes, where the first byte is the least significant.
 ; $02		direction:
-; 			1 => up    (bin 0001)
-; 			2 => right (bin 0010)
-; 			4 => down  (bin 0100)
-; 			8 => left  (bin 1000)
+; 				1 => up    (bin 0001)
+; 				2 => right (bin 0010)
+; 				4 => down  (bin 0100)
+;				8 => left  (bin 1000)
 ; $03		snake length, in number of bytes, not segments
 ; $04-05	screen location of snake head stored as two bytes
 ; $06-??	snake body (in byte pairs)
@@ -35,8 +35,8 @@
 ; OTHER NOTES:
 ; 	* Change direction with keys: W A S D
 ; 	* Unlike the system this game was originally designed for (a web-based system-in-a-browser), the Geek-Rig has 40x24 characters, from $0200-05BF.
-; 
-; 
+; 	* After the code for the high score screen, the "BYTE" stuff at the bottom sotres the high scores.  This is what will get overwritten at the end,
+; 		when the 4000's disk drive has a write function
 ; 
 ; ==========================================================================================================================================================
 	ORG $05CC
@@ -225,7 +225,7 @@ START_GAME:
 	JSR CREATE_APPLE
 MAIN_LOOP:
 	JSR READ_KEYS
-	; LEFT OFF HERE
+	JSR CHECK_COLLISIONS
 	JSR DRAW_APPLE
 	JMP MAIN_LOOP
 
@@ -330,9 +330,56 @@ GOING_LEFT:
 ILLEGAL_MOVE:
 	RTS	; just return, so the keypress is ignored
 	
+CHECK_COLLISIONS:
+	JSR CHECK_APPLE_COLLISION
+	JSR CHECK_SNAKE_COLLISION
+	RTS
+
+CHECK_APPLE_COLLISION:
+	;check if the snake collided with the apple by comparing the position of the snake's head and the apple.
+	LDA $00		;load value at address $00 (the least significant
+				;byte of the apple's position) into register A
+	CMP $04		;compare to the value stored at address $04
+				;(the least significant byte of the position of the snake's head)
+	BNE DONE_CHECKING_APPLE_COLLISION
+	LDA $01		;load value of address $01 (the most significant byte
+				;of the apple's position) into register A
+	CMP $11		;compare the value stored at address $11 (the most
+				;significant byte of the position of the snake's head)
+	BNE DONE_CHECKING_APPLE_COLLISION
+
+	;Ending up here means the coordinates of the snake head are equal to that of
+	;the apple: eat apple
+	inc $03		 ;increase the snake length
+	inc $03		 ;twice because we're adding two bytes for one segment
+
+	; Create a new apple
+	JSR CREATE_APPLE
+
+	; Update the player's score
+	INC HIGH_SCORE_PLAYER
+DONE_CHECKING_APPLE_COLLISION:
+	RTS
+	
+CHECK_SNAKE_COLLISION:
+	; LEFT OFF HERE
+	RTS
+
+
+
 
 GAME_OVER:
 	; In the original, this was the end of the program.
 	; For Viper, I'd like this to load a high score screen
 	; But for now...
 	JMP MAIN_MENU
+
+; The first byte is the score, and the 3 after it are the player's initials
+HIGH_SCORE_1:
+	BYTE $00, $00, $00, $00
+HIGH_SCORE_2:
+	BYTE $00, $00, $00, $00
+HIGH_SCORE_3:
+	BYTE $00, $00, $00, $00
+HIGH_SCORE_PLAYER:
+	BYTE $00, $00, $00, $00
