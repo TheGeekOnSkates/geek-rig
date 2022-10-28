@@ -1,8 +1,16 @@
 # TO-DO'S
 
-## The Geek-Rig itself just needs some work on the disk drive
+## The Geek-Rig itself
 
-A few notes on this:
+## Keyboard
+
+If I keep it in OnRead, it doesn't work.
+If it put it in the mainevent loop, it slows the system to a crawl.
+Ideas on other fixes:
+* Don't set it to zero except by Assembly
+* Try other ncurses settings... is it raw()?
+
+## Disk drive
 
 MM_BUFFER_START is not really what I initially thought it would be.
 It's a pointer to a NULL-terminated string, the NAME of the file to load/save.
