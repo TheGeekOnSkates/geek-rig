@@ -126,23 +126,16 @@ uint8 OnRead(uint16 address, void* context) {
 	if (address == MM_CLOCK) return (clock() - start) / CLOCKS_PER_SEC;
 	if (address == MM_RANDOM) return rand() % 256;
 	if (address == MM_ROWS) {
-		ram[address] = getmaxx(stdscr);
+		ram[address] = getmaxy(stdscr);
+		if (ram[address] > 24) ram[address] = 24;
 		return ram[address];
 	}
 	if (address == MM_COLUMNS) {
-		ram[address] = getmaxy(stdscr);
+		ram[address] = getmaxx(stdscr);
+		if (ram[address] > 40) ram[address] = 40;
 		return ram[address];
 	}
 	if (address == MM_KEY) {
-		/*
-		int key = getch();
-		if (key == -1)
-			key++;
-		else if (key >= 97 && key <= 122)
-			key -= 96;
-		ram[MM_KEY] = key;
-		return key;
-		*/
 		int key = getch();
 		if (key != -1) ram[MM_KEY] = key;
 	}
@@ -167,11 +160,13 @@ void resetGeekRig(MCS6502ExecutionContext* cpu) {
 	MCS6502Reset(cpu);
 
 	// Reset the screen RAM
-	for (int i=MM_SCREEN; i<MM_KEY; i++) ram[i] = 32;
+	for (int i=0; i<960; i++) ram[MM_SCREEN + i] = 32;
 
 	// Reset the rows and columns
 	ram[MM_COLUMNS] = getmaxx(stdscr);
+	if (ram[MM_COLUMNS] > 40) ram[MM_COLUMNS] = 40;
 	ram[MM_ROWS] = getmaxy(stdscr);
+	if (ram[MM_ROWS] > 24) ram[MM_ROWS] = 24;
 }
 
 void updateDisplay() {

@@ -14,8 +14,9 @@
 // Screen height
 #define ROWS() PEEK(0x05C1)
 
-// Current key pressed
-#define KEY() PEEK(0x05C2)
+// Last key pressed
+#define KEY() PEEK(0x05C2L)
+#define CLEAR_KEY() POKE(0x05C2L, 0)
 
 // Random number generator
 #define RANDOM() PEEK(0x05C3)
