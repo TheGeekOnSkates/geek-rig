@@ -3,20 +3,20 @@
 #include <stdbool.h>
 #include <peekpoke.h>
 #include <string.h>
-#include "geekrig4000.h"
+#include "../../system/geekrig4000.h"
 
 int main() {
 	// Declare variables
-	uint8_t rows = ROWS();
-	uint8_t columns = COLUMNS();
+	uint8_t rows = PEEK(ROWS);
+	uint8_t columns = PEEK(COLUMNS);
 
 	// Weird bug: Why are both of these variables zero?
 	POKE(SCREEN, rows);
 	POKE(SCREEN + 1, columns);
 
 	// It's clearly not a problem with the Geek-Rig, because...
-	POKE(SCREEN + 2, ROWS());		// Gives me 24, as it should
-	POKE(SCREEN + 3, COLUMNS());	// Gives me 40, as it should
+	POKE(SCREEN + 2, PEEK(ROWS));		// Gives me 24, as it should
+	POKE(SCREEN + 3, PEEK(COLUMNS));	// Gives me 40, as it should
 
 	// Whatever it is, this didn't help either.
 	// Same result with or without the while-loop.
@@ -31,11 +31,11 @@ int main() {
 	// (by then a highly advanced model beyond my
 	// wildest dreams) as a legit build target.
 	while(true) {
-		rows = ROWS();
-		columns = COLUMNS();
+		rows = PEEK(ROWS);
+		columns = PEEK(COLUMNS);
 		POKE(SCREEN, rows);
 		POKE(SCREEN + 1, columns);
-		POKE(SCREEN + 5, KEY());	// Just to confirm the while-loop works :)
+		POKE(SCREEN + 5, PEEK(KEY));	// Just to confirm the while-loop works :)
 	}
 	return 0;
 }
