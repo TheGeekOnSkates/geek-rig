@@ -76,13 +76,46 @@ DISK_ERROR_BUSY = 15
 
 
 ; --------------------------------------------------------------------------
-; KEYCODES
+; KEY CODES (stored in KEY [0x05C2] obviously :D)
 ; --------------------------------------------------------------------------
 
-KEY_SPACE = $20
-KEY_A = $61
-KEY_B = $62
-KEY_C = $63
-KEY_D = $64
-KEY_S = $73
-KEY_W = $77
+KEY_BACKSPACE =		$08
+KEY_TAB	=			$09
+KEY_ESCAPE =		$1B
+KEY_SPACE =			$20
+KEY_0 =				$30
+KEY_1 =				$31
+KEY_2 =				$32
+KEY_3 =				$33
+KEY_4 =				$34
+KEY_5 =				$35
+KEY_6 =				$36
+KEY_7 =				$37
+KEY_8 =				$38
+KEY_9 =				$39
+KEY_A =				$61
+KEY_B =				$62
+KEY_C =				$63
+KEY_D =				$64
+KEY_E =				$65
+KEY_F =				$66
+KEY_G =				$67
+KEY_H =				$68
+KEY_I =				$69
+KEY_J =				$6A
+KEY_K =				$6B
+KEY_L =				$6C
+KEY_M =				$6D
+KEY_N =				$6E
+KEY_O =				$6F
+KEY_P =				$70
+KEY_Q =				$71
+KEY_R =				$72
+KEY_S =				$73
+KEY_T =				$74
+KEY_U =				$75
+KEY_V =				$76
+KEY_W =				$77
+KEY_X =				$78
+KEY_Y =				$79
+KEY_Z =				$7A
