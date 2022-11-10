@@ -10,7 +10,7 @@
 ; ==========================================================================================================================================================
 	ORG $05CC
 	PROCESSOR 6502
-	include "geekrig4000.asm"
+	include "geekrig4000/memory-map.asm"
 
 GAME:
 	LDA #232
@@ -63,10 +63,10 @@ DONE_MOVING_RIGHT:
 
 DRAW_PLAYER:
 	LDY #0
-	LDA #$E9
+	LDA #PETSCII_TRIANGLE_UP_RIGHT
 	STA ($00),Y
 	INY
-	LDA #$DF
+	LDA #PETSCII_TRIANGLE_UP_LEFT
 	STA ($00),Y
 	RTS
 
@@ -120,4 +120,27 @@ DONE_SHOOTING:
 	RTS
 
 UPDATE_LASERS:
+	; Get the laser's position minus COLUMNS
+	LDA $02
+	STA MATH_N1_LO
+	LDA $03
+	STA MATH_N1_HI
+	LDA COLUMNS
+	STA MATH_N2_LO
+	LDA #0
+	STA MATH_N2_HI
+	JSR SUBTRACT
+	LDA MATH_RESULT_LO
+	STA $02
+	LDA MATH_RESULT_HI
+	STA $03
+DONE_UPDATING_LASERS:
 	RTS
+
+
+; =========================================================================
+; ADDITIONAL DEPENDENCIES (included hear because putting at the top
+; makes it the first thing to run, which of course breaks stuff :D)
+; =========================================================================
+
+	include "geekrig4000/math/subtract.asm"
