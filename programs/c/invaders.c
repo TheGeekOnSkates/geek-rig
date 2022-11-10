@@ -11,6 +11,7 @@ void main() {
 	while(true) {
 		key = PEEK(KEY);
 		POKE(SCREEN, key);
+		POKE(SCREEN + 1, PEEK(KEY));
 	}
 	
 	/*
