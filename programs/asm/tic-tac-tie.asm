@@ -3,7 +3,8 @@
 ;
 ; POINTERS:
 ;	$00-$05		Used for drawing stuff
-;	$FF			The player's choice (X or O)
+;	$10-$11		The player's character (X or O)
+;	$12-$135	The CPU's character
 ; ==========================================================================================================================================================
 
 	ORG $05CC
@@ -12,6 +13,7 @@
 
 MAIN:
 	JSR CLEAR_BOARD
+	JSR CLEAR_ERROR
 	JSR TITLE_SCREEN
 	JSR CLEAR_TITLE
 	JSR DRAW_BOARD
@@ -89,21 +91,245 @@ GAME_SCREEN_DRAW_TITLE_LINE_1:
 GAME_SCREEN_X_OR_O:
 	LDA KEY
 	CMP #KEY_X
-	BEQ GAME_SCREEN_DONE
+	BEQ PLAYER_WANTS_X
 	CMP #KEY_O
 	BEQ GAME_SCREEN_DONE
 	JMP GAME_SCREEN_X_OR_O
-GAME_SCREEN_DONE:
-	STA $FF
-	JSR CLEAR_TITLE
-	RTS
+PLAYER_WANTS_X:
+	LDX #<BOARD_X
+	STX $10
+	LDX #>BOARD_X
+	STX $11
+	LDX #<BOARD_O
+	STX $12
+	LDX #>BOARD_O
+	STX $13
+	JMP GAME_SCREEN_DONE
+PLAYER_WANTS_O:
+	LDX #<BOARD_O
+	STX $10
+	LDX #>BOARD_O
+	STX $11
+	LDX #<BOARD_X
+	STX $12
+	LDX #>BOARD_X
+	STX $13
+	JMP GAME_SCREEN_DONE
 
 GAME_SCREEN:
 	LDA KEY
-	CMP #KEY_ESCAPE
-	BNE GAME_SCREEN
+	CMP #KEY_1
+	BEQ PLAYER_ON_1_START
+	CMP #KEY_2
+	BEQ PLAYER_ON_2_START
+	CMP #KEY_3
+	BEQ PLAYER_ON_3_START
+	CMP #KEY_4
+	BEQ PLAYER_ON_4_START
+	CMP #KEY_5
+	BEQ PLAYER_ON_5_START
+	CMP #KEY_6
+	BEQ PLAYER_ON_6_START
+	CMP #KEY_7
+	BEQ PLAYER_ON_7_START
+	CMP #KEY_8
+	BEQ PLAYER_ON_8_START
+	CMP #KEY_9
+	BEQ PLAYER_ON_9_START
+	JMP GAME_SCREEN	; for now
+
+PLAYER_ON_1_START:
+	JMP PLAYER_ON_1
+PLAYER_ON_2_START:
+	JMP PLAYER_ON_2
+PLAYER_ON_3_START:
+	JMP PLAYER_ON_3
+PLAYER_ON_4_START:
+	JMP PLAYER_ON_4
+PLAYER_ON_5_START:
+	JMP PLAYER_ON_5
+PLAYER_ON_6_START:
+	JMP PLAYER_ON_6
+PLAYER_ON_7_START:
+	JMP PLAYER_ON_7
+PLAYER_ON_8_START:
+	JMP PLAYER_ON_8
+PLAYER_ON_9_START:
+	JMP PLAYER_ON_9
+	
+GAME_SCREEN_CONTINUE:
+	JMP GAME_SCREEN
+GAME_SCREEN_DONE:
 	JSR CLEAR_BOARD
 	RTS
+PLAYER_ON_1:
+	LDA #0
+	STA KEY
+	LDA SCREEN + 335
+	CMP #PETSCII_1
+	BNE SPACE_IS_TAKEN_BRIDGE
+	LDA $10
+	STA $00
+	LDA $11
+	STA $01
+	LDY #0
+	JSR DRAW_1
+	JSR CLEAR_ERROR
+	JMP GAME_SCREEN_CONTINUE
+PLAYER_ON_2:
+	LDA #0
+	STA KEY
+	LDA SCREEN + 339
+	CMP #PETSCII_2
+	BNE SPACE_IS_TAKEN_BRIDGE
+	LDA $10
+	STA $00
+	LDA $11
+	STA $01
+	LDY #0
+	JSR DRAW_2
+	JSR CLEAR_ERROR
+	JMP GAME_SCREEN_CONTINUE
+PLAYER_ON_3:
+	LDA #0
+	STA KEY
+	LDA SCREEN + 343
+	CMP #PETSCII_3
+	BNE SPACE_IS_TAKEN_BRIDGE
+	LDA $10
+	STA $00
+	LDA $11
+	STA $01
+	LDY #0
+	JSR DRAW_3
+	JSR CLEAR_ERROR
+	JMP GAME_SCREEN_CONTINUE
+PLAYER_ON_4:
+	LDA #0
+	STA KEY
+	LDA SCREEN + 175
+	CMP #PETSCII_4
+	BNE SPACE_IS_TAKEN_BRIDGE
+	LDA $10
+	STA $00
+	LDA $11
+	STA $01
+	LDY #0
+	JSR DRAW_4
+	JSR CLEAR_ERROR
+	JMP GAME_SCREEN_CONTINUE
+
+SPACE_IS_TAKEN_BRIDGE:
+	JMP SPACE_IS_TAKEN
+
+PLAYER_ON_5:
+	LDA #0
+	STA KEY
+	LDA SCREEN + 179
+	CMP #PETSCII_5
+	BNE SPACE_IS_TAKEN_BRIDGE
+	LDA $10
+	STA $00
+	LDA $11
+	STA $01
+	LDY #0
+	JSR DRAW_5
+	JSR CLEAR_ERROR
+	JMP GAME_SCREEN_CONTINUE	
+PLAYER_ON_6:
+	LDA #0
+	STA KEY
+	LDA SCREEN + 183
+	CMP #PETSCII_6
+	BNE SPACE_IS_TAKEN_BRIDGE
+	LDA $10
+	STA $00
+	LDA $11
+	STA $01
+	LDY #0
+	JSR DRAW_6
+	JSR CLEAR_ERROR
+	JMP GAME_SCREEN_CONTINUE
+PLAYER_ON_7:
+	LDA #0
+	STA KEY
+	LDA SCREEN + 15
+	CMP #PETSCII_7
+	BNE SPACE_IS_TAKEN
+	LDA #0
+	STA KEY
+	LDA SCREEN + 15
+	CMP #PETSCII_7
+	BNE SPACE_IS_TAKEN
+	LDA $10
+	STA $00
+	LDA $11
+	STA $01
+	LDY #0
+	JSR DRAW_7
+	JSR CLEAR_ERROR
+	JMP GAME_SCREEN_CONTINUE
+PLAYER_ON_8:
+	LDA #0
+	STA KEY
+	LDA SCREEN + 19
+	CMP #PETSCII_8
+	BNE SPACE_IS_TAKEN
+	LDA #0
+	STA KEY
+	LDA SCREEN + 19
+	CMP #PETSCII_8
+	BNE SPACE_IS_TAKEN
+	LDA $10
+	STA $00
+	LDA $11
+	STA $01
+	LDY #0
+	JSR DRAW_8
+	JSR CLEAR_ERROR
+	JMP GAME_SCREEN_CONTINUE
+PLAYER_ON_9:
+	LDA #0
+	STA KEY
+	LDA SCREEN + 23
+	CMP #PETSCII_9
+	BNE SPACE_IS_TAKEN
+	LDA $10
+	STA $00
+	LDA $11
+	STA $01
+	LDY #0
+	JSR DRAW_9
+	JSR CLEAR_ERROR
+	JMP GAME_SCREEN_CONTINUE
+SPACE_IS_TAKEN:
+	LDA #<SPACE_TAKEN
+	STA $00
+	LDA #>SPACE_TAKEN
+	STA $01
+	LDY #0
+	JSR SET_ERROR
+	JMP GAME_SCREEN_CONTINUE
+
+; Shows an error message
+; Expects $00 to the address of the error message
+SET_ERROR:
+	LDA ($00),Y
+	STA SCREEN + 450,Y
+	INY
+	CPY #24
+	BNE SET_ERROR
+	RTS
+CLEAR_ERROR:
+	LDA #$20
+	LDY #0
+CLEAR_ERROR_LOOP:
+	STA SCREEN + 450,Y
+	INY
+	CPY #24
+	BNE CLEAR_ERROR_LOOP
+	RTS
+
 
 DRAW_BOARD:
 	LDA #<BOARD_LINE_1
@@ -156,34 +382,6 @@ DRAW_BOARD_NUMBERS:
 	INX
 	STX SCREEN + 343
 	RTS
-
-
-; HOLY SMOKE THIS ACTUALLY WORKED! :d
-; IDEA:
-	; $00-$01 = character to draw
-;	LDA #<BOARD_O
-;	STA $00
-;	LDA #>BOARD_O
-;	STA $01
-;	LDY #0
-;	JSR DRAW_1
-;	LDY #0
-;	JSR DRAW_2
-;	LDY #0
-;	JSR DRAW_3
-;	LDY #0
-;	JSR DRAW_4
-;	LDY #0
-;	JSR DRAW_5
-;	LDY #0
-;	JSR DRAW_6
-;	LDY #0
-;	JSR DRAW_7
-;	LDY #0
-;	JSR DRAW_8
-;	LDY #0
-;	JSR DRAW_9
-;	JMP IDEA	; for now
 
 DRAW_7:
 	LDA ($00),Y
@@ -313,17 +511,57 @@ DRAW_3:
 
 
 
-TITLE_SCREEN_LINE_1:	; "TIC-TAC-TIE :)"
+; ==========================================================================================================================================================
+; GRAPHICS
+; ==========================================================================================================================================================
+
+; The 2 lines that make up the (admittedly minimal title screen):
+; "TIC-TAC-TIE :)"
+; " PRESS X OR O"
+TITLE_SCREEN_LINE_1:
 	BYTE $14,$09,$03,$2D,$14,$01,$03,$2D,$14,$09,$05,$20,$3A,$29
-TITLE_SCREEN_LINE_2:	; " PRESS X OR O"
+TITLE_SCREEN_LINE_2:
 	BYTE $20,$10,$12,$05,$13,$13,$20,$18,$20,$0F,$12,$20,$0F
-BOARD_LINE_1:	; Like "  |  |  "
+
+; Like "  |  |  "
+BOARD_LINE_1:
 	BYTE $20,$20,$E1,$61,$20,$20,$E1,$61,$20,$20
-BOARD_LINE_2:	; Top half of a horizontal line, like "--+--+--"
+
+; Top half of a horizontal line, like "--+--+--"
+BOARD_LINE_2:
 	BYTE $62,$62,$FE,$FC,$62,$62,$FE,$FC,$62,$62
-BOARD_LINE_3:	; Bottom half of the horizontal line
+
+; Bottom half of the horizontal line
+BOARD_LINE_3:
 	BYTE $E2,$E2,$FB,$EC,$E2,$E2,$FB,$EC,$E2,$E2
-BOARD_X:		; The X character, 2x2 chars, from top left to bottom right (so like \//\)
+
+; The X character, 2x2 chars, from top left to bottom right (so like \//\)
+BOARD_X:
 	BYTE $4D,$4E,$4E,$4D
-BOARD_O:		; The O character, done the same way
+
+; The O character, done the same way
+BOARD_O:
 	BYTE $55,$49,$4A,$4B
+
+
+; Messages to the player
+
+; "THAT SPACE IS TAKEN     "
+SPACE_TAKEN:
+	BYTE $14,$08,$01,$14,$20,$13,$10,$01,$03,$05,$20,$09,$13,$20,$14,$01,$0B,$05,$0E,$20,$20,$20,$20,$20
+
+; "TIED AGAIN. BIG SHOCK :)"
+TIED_AGAIN:
+	BYTE $14,$09,$05,$04,$20,$01,$07,$01,$09,$0E,$2E,$20,$02,$09,$07,$20,$13,$08,$0F,$03,$0B,$20,$3A,$29
+
+; "YOU LOST?! WHAT THE...? "
+YOU_LOST:
+	BYTE $19,$0F,$15,$20,$0C,$0F,$13,$14,$3F,$21,$20,$17,$08,$01,$14,$20,$14,$08,$05,$2E,$2E,$2E,$3F,$20
+
+; "WOW! YOU WON! CONGRATS!!"
+YOU_WON:
+	BYTE $17,$0F,$17,$21,$20,$19,$0F,$15,$20,$17,$0F,$0E,$21,$20,$03,$0F,$0E,$07,$12,$01,$14,$13,$21,$21
+
+; "PRESS ANY KEY TO PLAY AGAIN."
+PLAY_AGAIN:
+	BYTE $10,$12,$05,$13,$13,$20,$01,$0E,$19,$20,$0B,$05,$19,$20,$14,$0F,$20,$10,$0C,$01,$19,$20,$01,$07,$01,$09,$0E,$2E
