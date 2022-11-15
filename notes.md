@@ -1,17 +1,15 @@
 # Current status
 
 I'm seriously considering skipping to the "finishing touches" section below;
-the 4000 works.  I can compile software for it.  It's been fun pushing my
-6502 skills to the limit, but I just don't feel like spending countless hours
-doing things I could do in seconds in C.  And getting cc65 to cooperate has
-been like trying to teach a dog to ice skate. :D
+the 4000 works.  I can compile and run software for it.  You could fork this
+right now and (from reading the comments in my header and .asm files) start to
+use it.  But before I move on to the 8000, there are a few things I want to try:
 
-But I will do my best to resist the temptation.  My game plan right nowis:
-
-1. Finish Tic-Tac-Tie.  Assume 40 columns so I don't have to do the weird centering nonsense.  My CRT, my Termux, and even my Cool-Retro-Term all have 40 columns.  If someone else wants to play it, they'll have to zoom their terminal for a bit.
-2. Keep trying on cc65.  If it happens, maybe build something else.  If not, no biggy.
-3. Get it working on the Pi 1 and on Termux; maybe include binaries in the project for that.
-4. Write docs - at least show the memory map, supported disk statuses, etc. like in the header file.
+* Finish Tic-Tac-Tie.  I've made great progress, but just got tired of it. :)
+* I started on a kernel; play with that some more, and if possible use that to build a little text-based game
+* Keep trying on cc65.  Seriously thinking about reaching out on a forum about this.
+* Get it working on the Pi 1 and on Termux; maybe include binaries in the project for that.
+* Write docs - at least show the memory map, supported disk statuses, etc. like in the header file.
 
 THEN it's time to start on the 8000. :)
 

@@ -4,7 +4,7 @@
 ; POINTERS:
 ;	$00-$05		Used for drawing stuff
 ;	$10-$11		The player's character (X or O)
-;	$12-$135	The CPU's character
+;	$12-$13		The CPU's character
 ; ==========================================================================================================================================================
 
 	ORG $05CC
@@ -136,7 +136,7 @@ GAME_SCREEN:
 	BEQ PLAYER_ON_8_START
 	CMP #KEY_9
 	BEQ PLAYER_ON_9_START
-	JMP GAME_SCREEN	; for now
+	JMP GAME_SCREEN
 
 PLAYER_ON_1_START:
 	JMP PLAYER_ON_1
@@ -175,7 +175,7 @@ PLAYER_ON_1:
 	LDY #0
 	JSR DRAW_1
 	JSR CLEAR_ERROR
-	JMP GAME_SCREEN_CONTINUE
+	JMP AI_TURN
 PLAYER_ON_2:
 	LDA #0
 	STA KEY
@@ -189,7 +189,7 @@ PLAYER_ON_2:
 	LDY #0
 	JSR DRAW_2
 	JSR CLEAR_ERROR
-	JMP GAME_SCREEN_CONTINUE
+	JMP AI_TURN
 PLAYER_ON_3:
 	LDA #0
 	STA KEY
@@ -203,7 +203,7 @@ PLAYER_ON_3:
 	LDY #0
 	JSR DRAW_3
 	JSR CLEAR_ERROR
-	JMP GAME_SCREEN_CONTINUE
+	JMP AI_TURN
 PLAYER_ON_4:
 	LDA #0
 	STA KEY
@@ -217,7 +217,7 @@ PLAYER_ON_4:
 	LDY #0
 	JSR DRAW_4
 	JSR CLEAR_ERROR
-	JMP GAME_SCREEN_CONTINUE
+	JMP AI_TURN
 
 SPACE_IS_TAKEN_BRIDGE:
 	JMP SPACE_IS_TAKEN
@@ -235,7 +235,7 @@ PLAYER_ON_5:
 	LDY #0
 	JSR DRAW_5
 	JSR CLEAR_ERROR
-	JMP GAME_SCREEN_CONTINUE	
+	JMP AI_TURN
 PLAYER_ON_6:
 	LDA #0
 	STA KEY
@@ -249,7 +249,7 @@ PLAYER_ON_6:
 	LDY #0
 	JSR DRAW_6
 	JSR CLEAR_ERROR
-	JMP GAME_SCREEN_CONTINUE
+	JMP AI_TURN
 PLAYER_ON_7:
 	LDA #0
 	STA KEY
@@ -268,7 +268,7 @@ PLAYER_ON_7:
 	LDY #0
 	JSR DRAW_7
 	JSR CLEAR_ERROR
-	JMP GAME_SCREEN_CONTINUE
+	JMP AI_TURN
 PLAYER_ON_8:
 	LDA #0
 	STA KEY
@@ -287,7 +287,7 @@ PLAYER_ON_8:
 	LDY #0
 	JSR DRAW_8
 	JSR CLEAR_ERROR
-	JMP GAME_SCREEN_CONTINUE
+	JMP AI_TURN
 PLAYER_ON_9:
 	LDA #0
 	STA KEY
@@ -301,7 +301,7 @@ PLAYER_ON_9:
 	LDY #0
 	JSR DRAW_9
 	JSR CLEAR_ERROR
-	JMP GAME_SCREEN_CONTINUE
+	JMP AI_TURN
 SPACE_IS_TAKEN:
 	LDA #<SPACE_TAKEN
 	STA $00
@@ -510,6 +510,31 @@ DRAW_3:
 	RTS
 
 
+AI_TURN:
+	; Load the X or O graphic
+	; (whichever the player didn't want)
+	; into the pointer at $00-01
+	LDA $12
+	STA $00
+	LDA $13
+	STA $01
+
+	; If the middle is free, the
+	; AI's choice is obvious :)
+	LDA SCREEN + 179
+	CMP #PETSCII_5
+	BEQ AI_WANTS_MIDDLE
+	; Once 5 works, handle the others
+	; The basic strategy is:
+	; 1. Block if possible
+	; 2. Look for ways to score if not
+AI_WANTS_MIDDLE:
+	JSR DRAW_5
+	JMP AI_TURN_DONE
+AI_TURN_DONE:
+	JMP GAME_SCREEN_CONTINUE
+
+
 
 ; ==========================================================================================================================================================
 ; GRAPHICS
@@ -542,7 +567,6 @@ BOARD_X:
 ; The O character, done the same way
 BOARD_O:
 	BYTE $55,$49,$4A,$4B
-
 
 ; Messages to the player
 
