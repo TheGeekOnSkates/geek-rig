@@ -3,13 +3,11 @@
 	include "geekrig4000/memory-map.asm"
 
 	; OTHER KERNEL SUBROUTINES I'D LIKE TO ADD:
-	; DrawCursor
-	; CursorForward
-	; CursorBack
 	; CursorUp
 	; CursorDown
+	; ShowCursor (make it blink)
 	; MoveCursor (using X and Y registers as coordinates)
-	; SetCharAtCursor
+	; SetCharAtCursor (I kinda have that already - see tests below)
 	; GetChar (not sur ewhat to call this function really - not like C, more like "CHROUT" on the C64).  It should:
 	;	- handle Backspace, Delete etc.
 	;	- type printable characters
@@ -44,11 +42,60 @@
 
 
 ; -------------------------------------------------------------------------------
-; Test #1: Fill the screen with G's
+; Test #1: Fill the screen with G's (worked)
+;
+;	LDA #7
+;	JSR ClearScreen
+;	BRK
 
-	LDA #7
-	JSR ClearScreen
-	BRK
+; -------------------------------------------------------------------------------
+; Test #2: Fill the screen with G's using CursorForward
+; this one had interesting results... in some ways, it
+; seems faster than #1 above... but it was also kind of\
+; "jumpy" (for lack of a fancy technical term, lol)
+;
+;
+;	JSR InitCursor
+;Test:
+;	LDA #7
+;	STA ($00),Y
+;	JSR CursorForward
+;	JMP Test
+
+
+; -------------------------------------------------------------------------------
+; Test #3: Fill the screen with G's using CursorBack
+; This one was fun!  It filled the screen in a way
+; that was (obviously) backwards - but what a cool
+; effect!  I could ABSOLUTELY see using that in a game. :)
+
+;	LDA #$C0
+;	STA $00
+;	LDA #$05
+;	STA $01
+;Test:
+;	LDA #7
+;	STA ($00),Y
+;	JSR CursorBack
+;	JMP Test
+
+; -------------------------------------------------------------------------------
+; Test #4: Typing! :D
+; Unlike the others, I did NOT test this in "Easy 6502" first.
+; But obviously, this is something many programs would benefit from...
+
+	JSR InitCursor
+	LDY #0
+TypeStuff:
+	LDA KEY
+	BEQ TypeStuff
+	STA (KERNEL_CURSOR_LSB),Y
+	LDA #0
+	STA KEY
+	JSR CursorForward
+	JMP TypeStuff
+
+
 
 
 ; Defines ClearScreen and other stuff

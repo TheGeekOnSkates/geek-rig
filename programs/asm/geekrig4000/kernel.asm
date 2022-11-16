@@ -1,3 +1,51 @@
+CursorBack:
+	; First, check if we're already at the beginning ($0200)
+	LDA KERNEL_CURSOR_MSB	; MSB of pointer
+	CMP #$02		; MSB of $0200
+	BCC CursorBack_Done	; cursor < $0200 - should never happen
+	BNE CursorBack_GoodToGo	; cursor > $0200
+	LDA KERNEL_CURSOR_LSB	; LSB of pointer
+	CMP #$00		; LSB of $0200
+	BCC CursorBack_Done	; cursor < $0200 - should never happen
+	BEQ CursorBack_Done	; cursor = $0200 - can't go any further back
+CursorBack_GoodToGo:
+	; And from here, I'm reusing the 16-bit subtraction trick I learned the other day :)
+	SEC			; Set the carry flag
+	LDA KERNEL_CURSOR_LSB
+	SBC #1
+	STA KERNEL_CURSOR_LSB
+	LDA KERNEL_CURSOR_MSB	; MSB of pointer	
+	SBC #$00		; Weird that it works, but it works
+	STA KERNEL_CURSOR_MSB	
+CursorBack_Done:
+	RTS
+
+CursorForward:
+	; First, check if we're already at the end ($05C0)
+	LDA KERNEL_CURSOR_MSB	; MSB of pointer
+	CMP #$05		; MSB of $05C0
+	BCC CursorForward_GoodToGo
+	BNE CursorForward_Done	; Should never happen
+	LDA KERNEL_CURSOR_LSB	; LSB of pointer
+	CMP #$C0		; LSB of $05C0
+	BCS CursorForward_Done
+CursorForward_GoodToGo:
+	INC KERNEL_CURSOR_LSB
+	BEQ CursorForward_Bit2
+	JMP CursorForward_Done
+CursorForward_Bit2:
+	INC KERNEL_CURSOR_MSB
+CursorForward_Done:
+	RTS
+
+InitCursor:
+	LDA #<SCREEN
+	STA $00
+	LDA #>SCREEN
+	STA $01
+	RTS
+
+
 
 ; ------------------------------------------------------------------------------------------------
 ; Fills screen RAM with the value of the A-register

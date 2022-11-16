@@ -13,6 +13,14 @@ DISK_BUFFER_START = $05C7	; Pointer to start of read/write buffer
 DISK_BUFFER_END = $05C9		; Pointer to end of read/write buffer
 DISK_STATUS = $05CB			; Disk drive status and character set:
 
+; If using the kernel, it uses these memory addresses
+; (and actually, I would just say leave $00 to $0F alone, lol)
+KERNEL_CURSOR_LSB = $00
+KERNEL_CURSOR_MSB = $01
+
+
+
+
 
 ; If not using any of the stuff in the "math" folder, you can put whatever
 ; you like in these memory addresses.

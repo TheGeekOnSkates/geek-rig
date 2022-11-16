@@ -5,13 +5,13 @@ the 4000 works.  I can compile and run software for it.  You could fork this
 right now and (from reading the comments in my header and .asm files) start to
 use it.  But before I move on to the 8000, there are a few things I want to try:
 
+* Finish the kernel - this has actually been more fun than building games (which is weird, but I'm cool w/that) :)
+* Use the kernel to create a text based game (maybe a "Mad Libs" game I can go on to port to other 6502's :))
 * Finish Tic-Tac-Tie.  I've made great progress, but just got tired of it. :)
-* I started on a kernel; play with that some more, and if possible use that to build a little text-based game
 * Keep trying on cc65.  Seriously thinking about reaching out on a forum about this.
 * Get it working on the Pi 1 and on Termux; maybe include binaries in the project for that.
 * Write docs - at least show the memory map, supported disk statuses, etc. like in the header file.
-
-THEN it's time to start on the 8000. :)
+* THEN it's time to start on the 8000. :)
 
 
 
