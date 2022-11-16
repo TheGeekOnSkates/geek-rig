@@ -83,17 +83,87 @@
 ; Test #4: Typing! :D
 ; Unlike the others, I did NOT test this in "Easy 6502" first.
 ; But obviously, this is something many programs would benefit from...
+;
+; This test might actually be the basis for Getchar or CharOut or whatever I end
+; up calling it, lol... 
+
+
+	; Idea: Change character set (worked)
+	; Let's get uppercase done right first :)
+	JSR UseLowercase
+
+
+
 
 	JSR InitCursor
-	LDY #0
-TypeStuff:
+WaitForKeyPress:
 	LDA KEY
-	BEQ TypeStuff
+	BEQ WaitForKeyPress
+	JSR PrintChar
+	JMP WaitForKeyPress
+
+PrintChar:
+
+	; For now, let's leave every character as-is.
+	; That test was intersting... So capital letters are working fine.
+	; So are numbers and a lot of punctuaion (but not all).
+	; So first, let's check for lowercase letters...
+	CMP #97
+	BCS PrintChar_CouldBeLetter
+
+PrintChar_NotLetter:
+
+	; If it gets here, just run it as-is
+	JMP PrintChar_Ready
+
+PrintChar_CouldBeLetter:
+	CMP #123
+	BCC PrintChar_IsLetter
+	JMP PrintChar_NotLetter
+
+PrintChar_IsLetter:
+	SEC
+	SBC #$60
+
+
+	
+	; If it's between 32 and 
+;	CMP #$20
+;	BCS PrintChar_CouldBePunctuation
+
+;PrintChar_NotPunctuation:
+
+	; Okay, we've eliminated that, so... how about letters
+;	CMP #97
+;	BCS PrintChar_CouldBeLetter
+
+;PrintChar_NotALetter:
+
+;	JMP PrintChar_Ready
+
+;PrintChar_CouldBePunctuation:
+;	CMP #$26
+;	BCC PrintChar_Ready
+;	JMP PrintChar_NotPunctuation
+;	
+;
+;
+;
+;PrintChar_CouldBeLetter:
+;	CMP #123
+;	BCC PrintChar_Ready
+;	JMP PrintChar_NotALetter
+;
+;PrintChar_IsLetter:
+;	SBC #32
+	
+PrintChar_Ready:
+	LDY #0
 	STA (KERNEL_CURSOR_LSB),Y
 	LDA #0
 	STA KEY
 	JSR CursorForward
-	JMP TypeStuff
+	RTS
 
 
 
@@ -101,3 +171,4 @@ TypeStuff:
 ; Defines ClearScreen and other stuff
 ; I haven't written yet :)
 	include "geekrig4000/kernel.asm"
+	

@@ -41,12 +41,13 @@ MATH_RESULT_HI = $09FF		; High-byte of the result (i.e. $68)
 
 
 ; --------------------------------------------------------------------------
-; Disk drive instructions (stored in MM_DISK_STATUS)
+; Disk drive instructions (stored in DISK_STATUS)
 ; --------------------------------------------------------------------------
 
 DISK_READ = %00100000
 DISK_WRITE = %01000000
 DISK_APPEND = %01100000
+
 
 ; --------------------------------------------------------------------------
 ; Disk drive status codes

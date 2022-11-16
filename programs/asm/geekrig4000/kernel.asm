@@ -91,3 +91,15 @@ ClearScreen_MovePointerDownOneRow_Bit2:
 ClearScreen_MovePointerDownOneRow_Done:
 	TXA			; Restore A to the value the user wanted
 	RTS			; And we're done updating the pointer
+
+
+UseLowercase:
+	LDA #$80
+	STA DISK_STATUS
+	RTS
+
+UseUppercase:
+	LDA DISK_STATUS
+	EOR #$80
+	STA DISK_STATUS
+	RTS
