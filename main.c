@@ -79,7 +79,14 @@ uint8 OnRead(uint16 address, void* context) {
  * @param[in] Not used (yet)
  */
 void OnWrite(uint16 address, uint8 value, void* readWriteContext) {
-	// POKE address, value (or LDA #value, STA address) :-)
+	// If it's standard output, print it
+	if (address == GEEK_RIG_STDOUT) {
+		(void)write(STDOUT_FILENO, &value, 1);
+		ram[GEEK_RIG_STDOUT] = 0;
+		return;
+	}
+	
+	// Otherwise, POKE address, value (or LDA #value, STA address) :-)
 	ram[address] = value;
 }
 
@@ -163,12 +170,6 @@ int main(int argc, const char** argv) {
 		
 		// For now, quit if I typed "q"
 		if (ram[GEEK_RIG_STDIN] == 'q') break;
-		
-		// Print the value at standard output
-		if (ram[GEEK_RIG_STDOUT]) {
-			(void)write(STDOUT_FILENO, ram + GEEK_RIG_STDOUT, 1);
-			ram[GEEK_RIG_STDOUT] = 0;
-		}
 	}
 	
 	// Reset the terminal settings to what they were before

@@ -2,11 +2,10 @@
 
 ## Phase 1: Finish terminal input/output stuff
 
-* Get it reading compiled binaries, just my test programs for now
-* Now that terminal input/output is working, figure out the right place to put the read and write bytes in memory; I went with $F000 for output, and I haven't decided on one for input yet.  Look at the last page of the 6502's memory for this; that's usually ROM on real hardware, but it makes sense to put it there... or maybe use zero-page?  That would save a byte or two... maybe look at where real 8-bit machines put their serial ports?
-* Once it's reading compiled binaries, write a simple test program that reads user input and echoes it.  So that way if I press i.e. Escape and then C, it clears the screen.  Or if I type Backspace, it'll print... whatever character 0x08 is.  At that point, terminal I/O is completely done.
-* A bonus would be a way to get the character under the cursor
-* Double bonus if I can get the text attributes of the char under the cursor
+* A bonus would be a way to get the terminal size - 2 bytes well worth it
+* Double bonus if I can get the character under the cursor
+* Hat trick if I can get the text colors/attributes too!
+
 
 ## Phase 2: Set up a way to run system commands from 6502-land
 
