@@ -1,3 +1,51 @@
+# TO-DOs
+
+## Phase 1: Finish terminal input/output stuff
+
+* Get it reading compiled binaries, just my test programs for now
+* Now that terminal input/output is working, figure out the right place to put the read and write bytes in memory; I went with $F000 for output, and I haven't decided on one for input yet.  Look at the last page of the 6502's memory for this; that's usually ROM on real hardware, but it makes sense to put it there... or maybe use zero-page?  That would save a byte or two... maybe look at where real 8-bit machines put their serial ports?
+* Once it's reading compiled binaries, write a simple test program that reads user input and echoes it.  So that way if I press i.e. Escape and then C, it clears the screen.  Or if I type Backspace, it'll print... whatever character 0x08 is.  At that point, terminal I/O is completely done.
+* A bonus would be a way to get the character under the cursor
+* Double bonus if I can get the text attributes of the char under the cursor
+
+## Phase 2: Set up a way to run system commands from 6502-land
+
+Rather than linking a zillion libraries and breaking portability with Termux and probably a lot of other things, I'm just going to use `system()` to do things like sound, controller I/O etc.  That way if I really want, I can build programs that interact with the Geek-Rig over IPC.
+
+* Set up 2 bytes to be a pointer to the command to run.  The idea is that end-developers will (1) create a 0-terminated string, (b) poke the address of that string into a specific location, and then (c) poke a value into another address (to signal the C component that it should run a system command.
+* Once I have this working with `system()`, maybe look into `fork` and `execve` instead; it would be awesome to be able to share data between processes (text output, controller state, etc.) and not just return values.
+* If it does that... compile this sucker on Termux just to see if I still can!  This would be so cool... if the stupid locked-down world of Android will allow it. :-D
+
+## Phase 3: Write an emulated disk drive
+
+It should use plain old Linux files/folders, cuz at least for now, this thing only runs on Linux.  Here's where the RAM "banking" thing might come up, so maybe it can save bigger files... I have all kinds of ideas on how this could work, but that's far enough away that I just don't want to go there right now. :-)
+
+## Phase 4: Build a kernal
+
+Yes, I'm spelling it like Commodore did - it's more phonetically correct (lol).  Like I'm sure there will be some features I'll be reusing like crazy.  Clearing the screen, getting/setting the cursor position, setting the foreground and background colors etc.
+
+## Phase 5: Try to get cc65 to target the Geek-Rig
+
+I'm decent at 6502 Assembly; I'm way better at C (lol).  It would be awesome to be able to code for the Geek-Rig in C, with a nice library that I'm gonna build around the kernal.  Lord willing, when I get here, it'll be time to...
+
+## Phase 6: Build an operating system
+
+At this point, I'll probably be looking at either a BASIC, a Forth, or a shell like DOS or Bash.  Kinda leaning toward a Forth, just cuz #Forth!  But then again I might not be able to do any better than just an Assembly monitor.  We'll see I guess.
+
+## Phase 7: Write a manual and call it done
+
+Lord willing, when I get here, I'll have what I wanted to build: a lightweight, fairly portable, 6502-in-a-terminal.  Time to tell my fellow geeks about it!  I'm gonna build more software for the Geek-Rig, but wouldn't it be cool if some other people did too?  This could be a lot of fun for a lot of people, maybe even be useful beyond just games.
+
+## Phase 8: Build games and other fun stuff
+
+* Surely, this thing can do a Pong clone - my last attempt at this project (which tried to refresh the entire screen with every cycle) ran a nice title screen for a Snake clone.
+* Maybe port one of my text adventures to the Geek-Rig
+* I'd kind of like a text editor, or some other not-game software.  Maybe a Bible study tools (cuz I always use my tablet on Sundays lol)
+* And I mean if it can do Pong... why not Breakout?  Why not Space Invaders?  Heck, why not a platformer or maze game like Donkey Kong or Pac-Man? :-)
+
+
+--------------------------------------------------------------------------
+
 # The Geek-Rig: An 8-bit VM for the Linux terminal
 
 ## Overview
