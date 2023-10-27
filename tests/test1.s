@@ -2,7 +2,8 @@
  processor 6502
 
 ; Define some constants
-CHROUT = $F000			; Where to send terminal output
+STDIN	= 0xF000
+STDOUT	= 0xF001
 KEY_ESCAPE = $1B		; The ASCII char code (and also key code) 27, Esc
 
 
@@ -13,16 +14,21 @@ KEY_ESCAPE = $1B		; The ASCII char code (and also key code) 27, Esc
 	DEY					; Now Y = '3', meaning "yellow"
 	JSR SetColors
 	JSR ClearToColor	; Clear the screen and see what happens! :-)
-	BRK					; And end the program
+loop:
+	LDA STDIN			; Read a character
+;	CMP #$00			; If it's zero
+	BEQ loop			; Keep reading
+	STA STDOUT			; Print it
+	JMP loop			; And do it again :-)
 
 ; Sends the ANSI escape character (0x1B) followd by the character "c"
 ; Doesn't expect any registers as input
 ; Assumes the A-register is availablea.
 ClearScreen:
 	LDA #KEY_ESCAPE
-	STA CHROUT
+	STA STDOUT
 	LDA #99
-	STA CHROUT
+	STA STDOUT
 	RTS
 
 ; Sets the text color and background color
@@ -34,13 +40,13 @@ ClearScreen:
 ; if what you want is to change the background color too
 SetColors:
 	LDA #KEY_ESCAPE	; Escape
-	STA CHROUT
+	STA STDOUT
 	LDA #91		; '['
-	STA CHROUT
-	STX CHROUT	; X
-	STY CHROUT	; Y
+	STA STDOUT
+	STX STDOUT	; X
+	STY STDOUT	; Y
 	LDA #109	; 'm'
-	STA CHROUT
+	STA STDOUT
 	RTS
 
 ; Clears the screen, filling it in with whatever text color is currently set
@@ -48,13 +54,13 @@ SetColors:
 ; Assumes the A-register is availablea.
 ClearToColor:
 	LDA #KEY_ESCAPE	; Escape
-	STA CHROUT
+	STA STDOUT
 	LDA #91		; '['
-	STA CHROUT
+	STA STDOUT
 	LDA #50		; '2'
-	STA CHROUT
+	STA STDOUT
 	LDA #72		; 'J'
-	STA CHROUT
+	STA STDOUT
 	JSR Home
 	RTS
 	
@@ -63,10 +69,10 @@ ClearToColor:
 ; Assumes the A-register is availablea.
 Home:
 	LDA #KEY_ESCAPE
-	STA CHROUT
+	STA STDOUT
 	LDA #91		; '['
-	STA CHROUT
+	STA STDOUT
 	LDA #74		; 'H'
-	STA CHROUT
+	STA STDOUT
 	RTS
 

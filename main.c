@@ -2,7 +2,11 @@
 // Description:			An 8-bt virtual machine for the Linux terminal
 // Version:				1.0
 // Author:				The Geek on Skates
-// License:				To Be Decided
+// License:				My code: The Unlicense
+//						MCS6502: "MIT Licence: With Attribution"
+//						https://github.com/bzotto/MCS6502
+//						(hope I'm doing this right, Ben Zotto wrote it.
+//						Sorry, code monkey != legal beagle lol)
 //
 // ======================================================================
 // DEPENDENCIES
@@ -26,12 +30,21 @@
 
 
 // ======================================================================
-// GLOBAL VARIABLES
+// GLOBAL VARIABLES & COMPILE-TIME CONSTANTS (MACROS)
 // ======================================================================
 
 // For now just the one, the full 64K of memory (technically both RAM
 // and ROM... but I just called it "ram" to save some typing :-D)
 uint8 ram[65536];
+
+// The memory map as we know it:
+// Zero-page							= 0x0000 to 0x00FF
+// Stack								= 0x0100 to 0x01FF
+// User code							= 0x0200 to ????
+#define GEEK_RIG_STDIN	0xF000
+#define GEEK_RIG_STDOUT	0xF001
+// Pointer to where PC goeson reset		= 0xFFFC to 0xFFFD
+// Unknown, but preobably used			= 0xFFFE to 0xFFFF
 
 
 
@@ -61,12 +74,6 @@ uint8 OnRead(uint16 address, void* context) {
 void OnWrite(uint16 address, uint8 value, void* readWriteContext) {
 	// POKE address, value (or LDA #value, STA address) :-)
 	ram[address] = value;
-	
-	// Print the value at address 0xF000
-	if (ram[0xF000]) {
-		printf("%c", ram[0xF000]);
-		ram[0xF000] = 0;
-	}
 }
 
 /**
@@ -87,7 +94,8 @@ int main(int argc, const char** argv) {
 	tcgetattr(STDIN_FILENO, &newSettings);
 	oldSettings = newSettings;
 	newSettings.c_lflag &= ~(ICANON | ECHO);
-	newSettings.c_cc[VMIN] = 1;
+	newSettings.c_cc[VMIN] = 0;
+    newSettings.c_cc[VTIME] = 0;
 	tcsetattr(STDIN_FILENO, TCSANOW, &newSettings);	
 
 	// Set all memory to zeroes
@@ -102,6 +110,7 @@ int main(int argc, const char** argv) {
 	// Make sure I passed a file
 	if (argc != 2) {
 		printf("Usage: geek-rig inputFile.rig\n");
+		tcsetattr(STDIN_FILENO, TCSANOW, &oldSettings);
 		return 0;
 	}
 	
@@ -109,6 +118,7 @@ int main(int argc, const char** argv) {
 	input = fopen(argv[1], "rb");
 	if (input == NULL) {
 		perror("Error opening input file");
+		tcsetattr(STDIN_FILENO, TCSANOW, &oldSettings);
 		return 0;
 	}
 	// Read the file into memory starting at 0x0200
@@ -118,15 +128,18 @@ int main(int argc, const char** argv) {
 		if (i + 1 >= 65536 - 0x0200) {
 			printf("Error loading input file: file is too big\n");
 			(void)fclose(input);
+			tcsetattr(STDIN_FILENO, TCSANOW, &oldSettings);
 			return 0;
 		}
 		ram[0x0200 + i] = c;
-		printf("%02x (%c), ", ram[0x0200 + i], ram[0x0200 + i]);
 		i++;
 	}
+	
+	// Close the file and print an error if one came up
 	(void)fclose(input);
 	if (ferror(input)) {
 		perror("Error opening input file");
+		tcsetattr(STDIN_FILENO, TCSANOW, &oldSettings);
 		return 0;
 	}
 	
@@ -135,18 +148,45 @@ int main(int argc, const char** argv) {
 	MCS6502Reset(&context);
 	
 	// Main event loop
+	tcsetattr(STDIN_FILENO, TCSANOW, &newSettings);	
 	while(true) {
-		// Experiment
-		c = 0;
-		(void)read(STDIN_FILENO, &c, 1);
-		if (c) {
-			printf("%d %c\n", c, c);
-			if (c == 'q') break;
-		}
-		fflush(stdout);
 		
 		// Run the next instruction
 		MCS6502ExecNext(&context);
+		
+		// Read keyboard input
+		if (read(STDIN_FILENO, &c, 1) == 1)
+			ram[GEEK_RIG_STDIN] = c;
+		else ram[GEEK_RIG_STDIN] = 0;
+		if (c == 'q') break;
+		/*
+		LEFT OFF HERE: This little experiment shows that the limiting
+		factor, the thing that is making my Assembly program so slow,
+		may be some other kind of delay in read()...
+		My new Assembly code works, but it only seems to register
+		every 4-5 key presses.  But the 6502 is not being slow.  If I
+		comment out the line (about 10 lines down):
+		
+			ram[GEEK_RIG_STDOUT] = 0;
+		
+		Then the screen gets flooded with whatever character I type.  But
+		even then, it takes time for the character I type to get picked
+		up (I have to press it 3-4 times).  So the 6502 is printing the
+		character at that memory address CRAZY-fast.  So it's not the CPU.
+		It definitely seems to be the read() calls... Maybe I don't have
+		to call read() every time?  Either way, I've ruled out 
+		*/
+	
+		else if (c == 'r' || c == 'e') {
+			(void)write(STDOUT_FILENO, &c, 1);
+			c = 0;
+		}
+		
+		// Print the value at standard output
+		if (ram[GEEK_RIG_STDOUT]) {
+			(void)write(STDOUT_FILENO, ram + GEEK_RIG_STDOUT, 1);
+			ram[GEEK_RIG_STDOUT] = 0;
+		}
 	}
 	
 	// Reset the terminal settings to what they were before
