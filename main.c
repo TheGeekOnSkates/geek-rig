@@ -83,6 +83,7 @@ void OnWrite(uint16 address, uint8 value, void* readWriteContext) {
 	if (address == GEEK_RIG_STDOUT) {
 		(void)write(STDOUT_FILENO, &value, 1);
 		ram[GEEK_RIG_STDOUT] = 0;
+		fflush(stdout);
 		return;
 	}
 	

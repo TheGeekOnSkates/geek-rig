@@ -3,7 +3,8 @@
 ; Thank You my awesome Lord Jesus for the amazing tutorials here:
 ; https://retro64.altervista.org/blog/an-introduction-to-6502-math-addiction-subtraction-and-more/
 ; Note that code that uses this should set math16_1/2_low/hidh before
-; calling add16, sub16, multiply16 or divide16.
+; calling add16, subtract16, multiply16 or divide16.
+; Oh!  Also, see http://www.6502.org/source/
 ; =====================================================================
 
 math16_1_low =			$02
