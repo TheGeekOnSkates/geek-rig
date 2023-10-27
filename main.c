@@ -61,6 +61,13 @@ uint8 ram[65536];
  * to write to whichever bank is currently selected.
  */
 uint8 OnRead(uint16 address, void* context) {
+	if (address == GEEK_RIG_STDIN) {
+		char c = 0;
+		if (read(STDIN_FILENO, &c, 1) == 1)
+			ram[GEEK_RIG_STDIN] = c;
+		else ram[GEEK_RIG_STDIN] = 0;
+		return ram[GEEK_RIG_STDIN];
+	}
 	// But for now, it's easy cheesy:
 	return ram[address];
 }
@@ -154,33 +161,8 @@ int main(int argc, const char** argv) {
 		// Run the next instruction
 		MCS6502ExecNext(&context);
 		
-		// Read keyboard input
-		if (read(STDIN_FILENO, &c, 1) == 1)
-			ram[GEEK_RIG_STDIN] = c;
-		else ram[GEEK_RIG_STDIN] = 0;
-		if (c == 'q') break;
-		/*
-		LEFT OFF HERE: This little experiment shows that the limiting
-		factor, the thing that is making my Assembly program so slow,
-		may be some other kind of delay in read()...
-		My new Assembly code works, but it only seems to register
-		every 4-5 key presses.  But the 6502 is not being slow.  If I
-		comment out the line (about 10 lines down):
-		
-			ram[GEEK_RIG_STDOUT] = 0;
-		
-		Then the screen gets flooded with whatever character I type.  But
-		even then, it takes time for the character I type to get picked
-		up (I have to press it 3-4 times).  So the 6502 is printing the
-		character at that memory address CRAZY-fast.  So it's not the CPU.
-		It definitely seems to be the read() calls... Maybe I don't have
-		to call read() every time?  Either way, I've ruled out 
-		*/
-	
-		else if (c == 'r' || c == 'e') {
-			(void)write(STDOUT_FILENO, &c, 1);
-			c = 0;
-		}
+		// For now, quit if I typed "q"
+		if (ram[GEEK_RIG_STDIN] == 'q') break;
 		
 		// Print the value at standard output
 		if (ram[GEEK_RIG_STDOUT]) {
