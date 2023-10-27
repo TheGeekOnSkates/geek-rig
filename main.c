@@ -61,23 +61,27 @@ uint8 OnRead(uint16 address, void* context) {
 void OnWrite(uint16 address, uint8 value, void* readWriteContext) {
 	// POKE address, value (or LDA #value, STA address) :-)
 	ram[address] = value;
-		
-		// Print the value at address 0xF000
-		if (ram[0xF000]) {
-			printf("%c", ram[0xF000]);
-			ram[0xF000] = 0;
-		}
+	
+	// Print the value at address 0xF000
+	if (ram[0xF000]) {
+		printf("%c", ram[0xF000]);
+		ram[0xF000] = 0;
+	}
 }
 
 /**
  * The program starts here
+ * @param[in] The number of command-line parameters
+ * @param[in] The command-line parameters
  * @returns Zero unless the underlying OS says otherwise.
  */
-int main() {
+int main(int argc, const char** argv) {
 	// Declare variables
 	MCS6502ExecutionContext context;
 	char c;
 	struct termios newSettings, oldSettings;
+	FILE* input = NULL;
+	uint16_t i = 0;
 	
 	// Set up non-blocking getchar()
 	tcgetattr(STDIN_FILENO, &newSettings);
@@ -89,53 +93,42 @@ int main() {
 	// Set all memory to zeroes
 	memset(ram, 0, 65536);
 	
-	// For now, start the PC at 0x0900.
+	// For now, start the PC at 0x0200.
 	// The actual memory map is a work in progress, so I expect to be
 	// writing a lot of machine code there...
 	ram[0xFFFC] = 0x00;
-	ram[0xFFFD] = 0x09;
+	ram[0xFFFD] = 0x02;
 	
-	// Experiment: Clear the screen, turn on reverse mode,
-	// and print a letter (easier/shorter test lol)
+	// Make sure I passed a file
+	if (argc != 2) {
+		printf("Usage: geek-rig inputFile.rig\n");
+		return 0;
+	}
 	
-	// Clear the screen
-	ram[0x0900] = 0xA9;
-	ram[0x0901] = 0x1B;		// LDA #$1B (Escape)
-	ram[0x0902] = 0x8D;
-	ram[0x0903] = 0x00;
-	ram[0x0904] = 0xF0;		// STA $F000
-	ram[0x0905] = 0xA9;
-	ram[0x0906] = 'c';		// LDA #ASCII char 'c'
-	ram[0x0907] = 0x8D;
-	ram[0x0908] = 0x00;
-	ram[0x0909] = 0xF0;		// STA $F000
-	
-	// Turn on reverse color mode
-	ram[0x090A] = 0xA9;
-	ram[0x090B] = 0x1B;		// LDA #$1B (Escape)
-	ram[0x090C] = 0x8D;
-	ram[0x090D] = 0x00;
-	ram[0x090E] = 0xF0;		// STA $F000
-	ram[0x090F] = 0xA9;
-	ram[0x0910] = '[';
-	ram[0x0911] = 0x8D;
-	ram[0x0912] = 0x00;
-	ram[0x0913] = 0xF0;
-	ram[0x0914] = 0xA9;
-	ram[0x0915] = '7';
-	ram[0x0916] = 0x8D;
-	ram[0x0917] = 0x00;
-	ram[0x0918] = 0xF0;
-	ram[0x0919] = 0xA9;
-	ram[0x091A] = 'm';
-	ram[0x091B] = 0x8D;
-	ram[0x091C] = 0x00;
-	ram[0x091D] = 0xF0;
-	ram[0x091E] = 0xA9;
-	ram[0x091F] = 'A';
-	ram[0x0920] = 0x8D;
-	ram[0x0921] = 0x00;
-	ram[0x0922] = 0xF0;
+	// Run the file
+	input = fopen(argv[1], "rb");
+	if (input == NULL) {
+		perror("Error opening input file");
+		return 0;
+	}
+	// Read the file into memory starting at 0x0200
+	while(!feof(input) && !ferror(input)) {
+		(void)fread(&c, 1, 1, input);
+		if (ferror(input)) break;
+		if (i + 1 >= 65536 - 0x0200) {
+			printf("Error loading input file: file is too big\n");
+			(void)fclose(input);
+			return 0;
+		}
+		ram[0x0200 + i] = c;
+		printf("%02x (%c), ", ram[0x0200 + i], ram[0x0200 + i]);
+		i++;
+	}
+	(void)fclose(input);
+	if (ferror(input)) {
+		perror("Error opening input file");
+		return 0;
+	}
 	
 	// Set up the 6502
 	MCS6502Init(&context, OnRead, OnWrite, NULL);
