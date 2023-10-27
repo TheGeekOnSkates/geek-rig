@@ -5,6 +5,10 @@ test1:
 	clear && dasm ./tests/test1.s -otests/test1.rig -f3 || exit 1
 	wc -c ./tests/test1.rig && hexdump -C ./tests/test1.rig
 
+basic:
+	clear && dasm ./tests/basic.s -otests/basic.rig -f3 || exit 1
+	wc -c ./tests/basic.rig && hexdump -C ./tests/basic.rig
+
 run:
 	./geek-rig ./tests/test1.rig
 

@@ -2,6 +2,8 @@
 
 ## Phase 1: Finish terminal input/output stuff
 
+https://www.perplexity.ai/search/517beb33-4bbf-4292-b64d-fa734a9b9f16?s=u
+
 * A bonus would be a way to get the terminal size - 2 bytes well worth it
 * Double bonus if I can get the character under the cursor
 * Hat trick if I can get the text colors/attributes too!
