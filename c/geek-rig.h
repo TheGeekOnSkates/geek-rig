@@ -30,6 +30,11 @@ void ReadLine(char* buffer, uint8_t bufferSize) {
 		buffer[i+1] = '\0';
 		PutChar(buffer[i]);
 		if (buffer[i] == 10) return;
+		if (buffer[i] == 8) {
+			// do I need to print something?
+			i--;
+			continue;
+		}
 	}
 }
 
