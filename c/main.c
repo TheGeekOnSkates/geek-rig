@@ -9,10 +9,9 @@ void main() {
 	
 	// REPL! :-)
 	while(true) {
-		Print("type something:  ");
+		Print("the 8-bit shell:  ");
 		ReadLine(buffer, 80);
-		Print("\r\nyou typed:   ");
-		Print(buffer);
+		Run(buffer);
 		Print("\r\n\n");
 	}
 }

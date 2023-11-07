@@ -11,17 +11,9 @@ https://www.perplexity.ai/search/517beb33-4bbf-4292-b64d-fa734a9b9f16?s=u
 Looks like the AI may have scored the hat trick - needs more work
 
 
-## Phase 2: Set up a way to run system commands from 6502-land
+## Phase 2: Finish system commands from 6502-land
 
-Rather than linking a zillion libraries and breaking portability with Termux and probably a lot of other systems, I'm just going to use `system()` to do things like sound, controller I/O etc.  That way if I really want, I can build programs that interact with the Geek-Rig over IPC.
-
-* Here's how this is gonna work on the C side:
-	- 1 byte to send text to, the command to run (similar to stdout)
-	- When this byte receives text, it appends that text to a string
-		(then have it poke like 255 there, telling it to wait for more text)
-	- When this byte receives a zero (NULL terminator), run the command (the completed string) and clear the string
-	- I'm thinking another byte for capturing the program's output (be it text or binary) and another for the status (which you can PEEK to see if it's still running, or POKE to kill it)
-* Once I have this working with `system()`, maybe look into `fork` and `execve` instead; it would be awesome to be able to share data between processes (text output, controller state, etc.) and not just return values.
+* Now that it works with `system()`, look into `fork` and `execve` instead; it would be awesome to be able to share data between processes (text output, controller state, etc.) and not just return values.
 * If it does that... compile this sucker on Termux just to see if I still can!  This would be so cool... if the stupid locked-down world of Android will allow it. :-D
 
 ## Phase 3: Write an emulated disk drive

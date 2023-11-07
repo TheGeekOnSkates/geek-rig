@@ -32,11 +32,29 @@ void ReadLine(char* buffer, uint8_t bufferSize) {
 		if (buffer[i] == 10) return;
 		if (buffer[i] == 8) {
 			// do I need to print something?
-			i--;
+			if (i) i--;
 			continue;
 		}
 	}
 }
+
+/**
+ * Runs an extermal program/command
+ * @param[in] The program to run
+ * @remarks This is where a lot of the "magic" happens.  With this, you're
+ * really programming a "6502 in the Matrix".  Now you can truly harness
+ * all the full power of a Linux terminal from a 6502 emulator. :-)
+ */
+void Run(const char* program) {
+	// Copy the pointer into 0xF002-03 (GEEK_RIG_SYSTEM_LO/HI)
+	uint16_t address = (uint16_t)program;
+	POKE(0xF002, address % 256);
+	POKE(0xF003, address / 256);
+	
+	// Set the GEEK_RIG_SYSTEM_STATUS bit to run the command
+	POKE(0xF004, 1);
+}
+
 
 
 

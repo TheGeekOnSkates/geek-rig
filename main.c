@@ -40,9 +40,17 @@ uint8 ram[65536];
 // The memory map as we know it:
 // Zero-page							= 0x0000 to 0x00FF
 // Stack								= 0x0100 to 0x01FF
-// User code							= 0x0200 to ????
-#define GEEK_RIG_STDIN	0xF000
-#define GEEK_RIG_STDOUT	0xF001
+// User code							= 0x0200 to 0xEFFF
+#define GEEK_RIG_STDIN		0xF000		// Standard input
+#define GEEK_RIG_STDOUT		0xF001		// Standard output
+#define GEEK_RIG_SYSTEM_LO	0xF002		// Pointer to the address where
+#define GEEK_RIG_SYSTEM_HI	0xF003		// strings are stored for system()
+#define GEEK_RIG_SYSTEM_STATUS 0xF004	// 0: Waiting
+										// 1: Running
+										// 1 bit... other values?
+#define GEEK_RIG_SYSTEM_OUTPUT 0xF005	// System output (for now, just the
+										// return value; later, text output)
+// Empty space (?)						= 0xF006 to 0xFFFB
 // Pointer to where PC goeson reset		= 0xFFFC to 0xFFFD
 // Unknown, but preobably used			= 0xFFFE to 0xFFFF
 
@@ -78,12 +86,25 @@ uint8 OnRead(uint16 address, void* context) {
  * @param[in] The data to write there
  * @param[in] Not used (yet)
  */
-void OnWrite(uint16 address, uint8 value, void* readWriteContext) {
+void OnWrite(uint16 address, uint8 value, void* context) {
 	// If it's standard output, print it
 	if (address == GEEK_RIG_STDOUT) {
 		(void)write(STDOUT_FILENO, &value, 1);
 		ram[GEEK_RIG_STDOUT] = 0;
 		fflush(stdout);
+		return;
+	}
+	if (address == GEEK_RIG_SYSTEM_STATUS) {
+		if (!value) return;
+		char program[128];
+		memset(program, 0, 128);
+		int i = (ram[GEEK_RIG_SYSTEM_HI] * 256) + ram[GEEK_RIG_SYSTEM_LO],
+			j = 0;
+		while(i < 65536 && ram[i] && j < 128) {
+			program[j] = ram[i];
+			i++; j++;
+		}
+		ram[GEEK_RIG_SYSTEM_OUTPUT] = system(program);
 		return;
 	}
 	
